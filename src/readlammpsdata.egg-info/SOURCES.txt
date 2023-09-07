@@ -1,5 +1,7 @@
 LICENSE
+MANIFEST.in
 README.md
+requirements.txt
 setup.py
 src/readlammpsdata.py
 src/readlammpsdata.egg-info/PKG-INFO
