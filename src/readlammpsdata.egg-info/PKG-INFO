@@ -1,0 +1,12 @@
+Metadata-Version: 2.1
+Name: readlammpsdata
+Version: 1.0.0
+Summary: Read lammps data infomations.
+Home-page: https://github.com/eastsheng/readlammpsdata
+Author: CHENDONGSHENG
+Author-email: eastsheng@hotmail.com
+Description-Content-Type: text/markdown
+License-File: LICENSE
+
+# readlammpsdata
+A script for reading lammps data
