@@ -61,6 +61,76 @@ def str2array(strings):
     array = np.array(strings)
     return array
 
+def read_box(lmp):
+    """
+    read box size of lammps data:
+    lmp: lammps data file
+    """
+    Header = read_data(lmp, data_sub_str = "Header")
+    try:
+        x = extract_substring(Header,"improper types","xlo xhi").strip().split()
+    except:
+        try:
+            x = extract_substring(Header,"dihedral types","xlo xhi").strip().split()
+        except:
+            try:
+                x = extract_substring(Header,"angle types","xlo xhi").strip().split()
+            except:
+                try:
+                    x = extract_substring(Header,"bond types","xlo xhi").strip().split()
+                except:
+                    try:
+                        x = extract_substring(Header,"bond types","xlo xhi").strip().split()
+                    except:
+                        print("Error: No find 'xlo xhi'!")
+    
+    y = extract_substring(Header,"xlo xhi","ylo yhi").strip().split()
+    z = extract_substring(Header,"ylo yhi","zlo zhi").strip().split()
+    x = list(map(lambda f:float(f), x))
+    y = list(map(lambda f:float(f), y))
+    z = list(map(lambda f:float(f), z))
+    xyz = {
+        "xlo":x[0],
+        "xhi":x[1],
+        "ylo":y[0],
+        "yhi":y[1],
+        "zlo":z[0],
+        "zhi":z[1],
+    }
+    return xyz
+
+
+
+def read_Natoms(lmp):
+    """
+    read numebr of atoms from lammps data:
+    lmp: lammps data file
+    """
+    Header = read_data(lmp, data_sub_str = "Header")
+    Natoms = extract_substring(Header,"\n","atoms").strip().split()
+    Natoms = list(map(lambda f:int(f), Natoms))[-1]
+    return Natoms
+
+def read_charges(lmp):
+    """
+    read charges info from lammps data:
+    lmp: lammps data file
+    """
+    try:
+        Atoms = read_data(lmp, data_sub_str = "Atoms")
+        Atoms = str2array(Atoms)
+    except:
+        Atoms = read_data(lmp, data_sub_str = "Atoms # full")
+        Atoms = str2array(Atoms)
+
+    charges = np.float64(np.array(Atoms[:,3]))
+
+    # charges = list(map(lambda f:float(f), Atoms[:,3]))
+
+    return charges
+
+
+
 
 if __name__ == '__main__':
     path = "./(C6H9NO)1/"
