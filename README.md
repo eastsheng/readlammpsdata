@@ -44,10 +44,12 @@ print(round(sum(charges),6))
 
 ### Fixes
 
+- 2023-09-22
+  - [x] Add the `read_terms` function for reading complex lammpsdata
+
 - 2023-09-11
-
-  - [x] Add `read_box ` function.
-
-  - [x] Add `read_Natoms ` function.
-
-  - [x] Add `read_charges ` function.
+- [x] Add `read_box ` function.
+  
+- [x] Add `read_Natoms ` function.
+  
+- [x] Add `read_charges ` function.

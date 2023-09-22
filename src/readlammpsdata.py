@@ -1,5 +1,12 @@
 # A script to read lammps data
 import numpy as np
+
+def __version__():
+
+    version = "1.0.4"
+    
+    return print(version)
+
 def extract_substring(string, char1, char2):
     if char1 == "":
         start_index = 0
@@ -21,19 +28,42 @@ def read_data_sub(wholestr,sub_char,char1,char2):
     except:
         return "Warning: There is no "+sub_char+" term in your data!"
 
+def read_terms(lmpfile):
+    terms = ["Masses",
+             "Pair Coeffs","Bond Coeffs","Angle Coeffs","Dihedral Coeffs","Improper Coeffs",
+             "Atoms","Bonds","Angles","Dihedrals","Impropers"]
+    new_terms = []
+    with open(lmpfile, "r") as f:
+        for line in f:
+            # print(line)
+            if line != "\n":
+                line = line.split()[0]
+                if line in terms:
+                    new_terms.append(line)
 
-def search_chars(data_sub_str):
-    char_list = ["","Masses",
-                    "Pair Coeffs","Bond Coeffs","Angle Coeffs","Dihedral Coeffs","Improper Coeffs",
-                    "Atoms","Bonds","Angles","Dihedrals","Impropers",""]
-    data_sub_list = ["Header", "Masses",
-                    "Pair Coeffs","Bond Coeffs","Angle Coeffs","Dihedral Coeffs","Improper Coeffs",
-                    "Atoms","Bonds","Angles","Dihedrals","Impropers"]                
+    return new_terms
+
+def search_chars(data_sub_str,lmpfile):
+    char_list = read_terms(lmpfile)
+    char_list.insert(0,"")
+    char_list.append("")
+    data_sub_list = read_terms(lmpfile)
+    data_sub_list.insert(0,"Header")
+
+    # char_list = ["","Masses",
+    #                 "Pair Coeffs","Bond Coeffs","Angle Coeffs","Dihedral Coeffs","Improper Coeffs",
+    #                 "Atoms","Bonds","Angles","Dihedrals","Impropers",""]
+    # data_sub_list = ["Header", "Masses",
+    #                 "Pair Coeffs","Bond Coeffs","Angle Coeffs","Dihedral Coeffs","Improper Coeffs",
+    #                 "Atoms","Bonds","Angles","Dihedrals","Impropers"]                
+
+
     if data_sub_str in ["Atoms # full", "Atoms #"]:
         char_list[7] = "Atoms # full"
         data_sub_list[7] = "Atoms # full"
     else:
         pass
+
     for i in range(len(data_sub_list)):
         if data_sub_str == data_sub_list[i]:
             char1, char2 = char_list[i],char_list[i+1]
@@ -47,7 +77,7 @@ def search_chars(data_sub_str):
     return char1, char2
 
 def read_data(lmpfile, data_sub_str):
-    char1,char2 = search_chars(data_sub_str)       
+    char1,char2 = search_chars(data_sub_str,lmpfile)       
     with open(lmpfile,'r') as sc:
         wholestr=sc.read()
         # print(wholestr)
@@ -133,17 +163,17 @@ def read_charges(lmp):
 
 
 if __name__ == '__main__':
-    path = "./(C6H9NO)1/"
-    lmp1 = path+"tmp/UNK_0735D7.lmp"
+    # path = "./(C6H9NO)1/"
+    # lmp1 = path+"tmp/UNK_0735D7.lmp"
 
-    data_sub_list = ["Header", "Masses",
-                    "Pair Coeffs","Bond Coeffs","Angle Coeffs","Dihedral Coeffs","Improper Coeffs",
-                    "Atoms # full","Bonds","Angles","Dihedrals","Impropers"] 
+    # data_sub_list = ["Header", "Masses",
+    #                 "Pair Coeffs","Bond Coeffs","Angle Coeffs","Dihedral Coeffs","Improper Coeffs",
+    #                 "Atoms # full","Bonds","Angles","Dihedrals","Impropers"] 
 
-    # Atoms = read_data(lmp1, data_sub_str = "Atoms # full")
-    Atoms = read_data(lmp1, data_sub_str = "Bonds")
-    Atoms = str2array(Atoms)
-    print(Atoms)
-
+    # # Atoms = read_data(lmp1, data_sub_str = "Atoms # full")
+    # Atoms = read_data(lmp1, data_sub_str = "Bonds")
+    # # Atoms = str2array(Atoms)
+    # print(Atoms)
+    __version__()
 
     

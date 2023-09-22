@@ -23,6 +23,8 @@ if __name__ == '__main__':
     charges = rld.read_charges(lmp)
     print("Charges of atoms are %s" %charges)
     print(round(sum(charges),6))
+    x = rld.read_data(lmp,data_sub_str = "Masses")
+    print(x)
 
 
     
