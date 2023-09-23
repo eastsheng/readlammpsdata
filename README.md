@@ -1,6 +1,6 @@
 # readlammpsdata
 
-A script for reading lammps data
+A script for reading LAMMPS data
 
 
 
@@ -44,8 +44,14 @@ print(round(sum(charges),6))
 
 ### Fixes
 
+- 2023-09-23
+  - [x] Add the `read_atom_info` function
+  - [x] Add the `read_vol` function
+  - [x] Add the `read_xyz` function
+  - [x] Add the `read_pdb` function
+
 - 2023-09-22
-  - [x] Add the `read_terms` function for reading complex lammpsdata
+  - [x] Add the `read_terms` function for reading complex LAMMPS data
 
 - 2023-09-11
 - [x] Add `read_box ` function.
