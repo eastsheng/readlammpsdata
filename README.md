@@ -33,7 +33,7 @@ print(xyz)
 print(Lx)
 
 # 2. read atomic number 
-Natoms = rld.read_Natoms(lmp)
+Natoms = rld.read_atom_info(lmp,"atoms")
 print("Number of atoms is %s" %Natoms)
 
 # 3. read charges 
@@ -45,7 +45,7 @@ print(round(sum(charges),6))
 ### Fixes
 
 - 2023-09-23
-  - [x] Add the `read_atom_info` function
+  - [x] Replace the `read_Natoms` to the `read_atom_info` function
   - [x] Add the `read_vol` function
   - [x] Add the `read_xyz` function
   - [x] Add the `read_pdb` function
