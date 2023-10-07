@@ -5,7 +5,7 @@ def __version__():
     """
     read the version of readlammpsdata
     """
-    version = "1.0.4"
+    version = "1.0.5"
     return version
 
 def extract_substring(string, char1, char2):
@@ -100,12 +100,15 @@ def read_data(lmp, data_sub_str):
     'Masses', 'Pair Coeffs', 'Bond Coeffs', 'Angle Coeffs', 'Dihedral Coeffs', 'Improper Coeffs', 'Bonds', 'Angles', 'Dihedrals', 'Impropers'
     """
     char1,char2 = search_chars(lmp,data_sub_str)       
-    with open(lmp,'r') as sc:
-        wholestr=sc.read()
-        # print(wholestr)
-        sub = read_data_sub(wholestr,data_sub_str,char1,char2)
+    if char1 == "" and char2 == "":
+        pass
+    else:
+        with open(lmp,'r') as sc:
+            wholestr=sc.read()
+            # print(wholestr)
+            sub = read_data_sub(wholestr,data_sub_str,char1,char2)
 
-    return sub
+        return sub
 
 def str2array(strings):
     """

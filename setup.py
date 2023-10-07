@@ -15,7 +15,7 @@ with open("requirements.txt","r") as f:
 
 setup(
 name         = 'readlammpsdata',
-version      = '1.0.4',
+version      = '1.0.5',
 py_modules   = ['readlammpsdata'],
 author       = 'CHENDONGSHENG',
 author_email = 'eastsheng@hotmail.com',
