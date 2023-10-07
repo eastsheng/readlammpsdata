@@ -89,7 +89,7 @@ def search_chars(lmp, data_sub_str):
         return char1, char2
     except:
         char1, char2 = "",""
-        print("ERROR: your 'data_sub_str' arg is error !")     
+        print("Warning: '"+data_sub_str+"' not found in your data!")     
     return char1, char2
 
 def read_data(lmp, data_sub_str):
