@@ -55,18 +55,19 @@ print(round(sum(charges),6))
 
 ### Fixes
 
+- 2023-10-08
+  - [x] Add the `pdb2xyz` function;
+  - [x] Add the `read_formula` function;
+  - [x] Add the `modify_pos` function;
+  - [x] Add the `modify_pore_size` function;
 - 2023-09-23
-  - [x] Replace the `read_Natoms` to the `read_atom_info` function
-  - [x] Add the `read_vol` function
-  - [x] Add the `read_xyz` function
-  - [x] Add the `read_pdb` function
-
+  - [x] Replace the `read_Natoms` to the `read_atom_info` function;
+  - [x] Add the `read_vol` function;
+  - [x] Add the `read_xyz` function;
+  - [x] Add the `read_pdb` function;
 - 2023-09-22
-  - [x] Add the `read_terms` function for reading complex LAMMPS data
-
+  - [x] Add the `read_terms` function for reading complex LAMMPS data;
 - 2023-09-11
-- [x] Add `read_box ` function.
-  
-- [x] Add `read_Natoms ` function.
-  
-- [x] Add `read_charges ` function.
+  - [x] Add `read_box ` function;
+  - [x] Add `read_Natoms ` function;
+  - [x] Add `read_charges ` function;
