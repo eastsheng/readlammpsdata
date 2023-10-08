@@ -1,5 +1,6 @@
 # A script to read lammps data
 import numpy as np
+from collections import Counter
 
 def __version__():
     """
@@ -267,8 +268,13 @@ def read_pdb(pdbfile,term="all"):
     new_line = np.array(new_line)
     elements = " ".join(new_line[:,0].tolist())
     xyz = np.float64(new_line[:,1:])
-    conect = np.array(conect)
-    conect = np.int64(np.array(conect))
+    try:
+        # print(conect)
+        conect = np.array(conect)
+        conect = np.int64(np.array(conect))
+    except:
+        conect=conect
+
     if term == "elements":
         return elements
     elif term == "xyz":
@@ -276,12 +282,31 @@ def read_pdb(pdbfile,term="all"):
     elif term == "conect":
         return conect
     elif term == "all":
-        return elements, xyz, conect
+        return elements, xyz
     else:
         return elements, xyz, conect
 
 
+def read_formula(file):
+    """
+    read molecular formula from xyzfile or pdb file
+    file: xyzfile or pdb file
+    """
+    try:
+        elements,xyz = read_xyz(file)
+    except:
+        elements,xyz = read_pdb(file)
 
+    elements = elements.split()
+    element_counts = Counter(elements)
+    chemical_formula = ''
+    for element, count in element_counts.items():
+        chemical_formula += element
+        chemical_formula += " "
+        if count > 1:
+            chemical_formula += str(count)
+            chemical_formula += " "
+    return chemical_formula
 
 
 
