@@ -42,7 +42,7 @@ def read_terms(lmp):
     """
     terms = ["Masses",
              "Pair Coeffs","Bond Coeffs","Angle Coeffs","Dihedral Coeffs","Improper Coeffs",
-             "Atoms","Bonds","Angles","Dihedrals","Impropers"]
+             "Atoms","Velocities","Bonds","Angles","Dihedrals","Impropers"]
     new_terms = []
     with open(lmp, "r") as f:
         for line in f:
@@ -191,12 +191,12 @@ def read_charges(lmp):
     lmp: lammps data file
     return charges of all atoms
     """
-    try:
-        Atoms = read_data(lmp, data_sub_str = "Atoms")
-        Atoms = str2array(Atoms)
-    except:
-        Atoms = read_data(lmp, data_sub_str = "Atoms # full")
-        Atoms = str2array(Atoms)
+    # try:
+    Atoms = read_data(lmp, data_sub_str = "Atoms")
+    Atoms = str2array(Atoms)
+    # except:
+    #     Atoms = read_data(lmp, data_sub_str = "Atoms # full")
+    #     Atoms = str2array(Atoms)
 
     charges = np.float64(np.array(Atoms[:,3]))
 
