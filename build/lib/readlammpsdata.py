@@ -362,6 +362,8 @@ def modify_pore_size(lammpsdata,modify_data,modify_size=0,pdbxyz=None):
         if "zlo zhi" in Header[i]:
             Header[i] = Header[i].split()
             Header[i][1] = float(Header[i][1])+modify_size*10
+            Header[i][1] = Header[i][1]-float(Header[i][0])
+            Header[i][0] = "0.0"
             Header[i][1] = str(Header[i][1])
             Header[i] = "\t".join(Header[i])
 
