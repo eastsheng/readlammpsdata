@@ -48,8 +48,9 @@ def read_terms(lmp):
         for line in f:
             line = line.strip()
             if line != "":
-                if line in terms:
-                    new_terms.append(line)
+                for i in range(len(terms)):
+                    if terms[i] in line:
+                        new_terms.append(line)
     # print("Your lmp is composed of ",new_terms)
     return new_terms
 
@@ -61,12 +62,12 @@ def search_chars(lmp, data_sub_str):
     'Masses', 'Pair Coeffs', 'Bond Coeffs', 'Angle Coeffs', 'Dihedral Coeffs', 'Improper Coeffs', 'Bonds', 'Angles', 'Dihedrals', 'Impropers'
     """
     char_list = read_terms(lmp)
-    # print("Your lmp is composed of ",char_list)
     char_list.insert(0,"")
     char_list.append("")
+    # print("Your lmp is composed of ",char_list)
     data_sub_list = read_terms(lmp)
     data_sub_list.insert(0,"Header")
-
+    # print("Your lmp is composed of ",data_sub_list)
     # char_list = ["","Masses",
     #                 "Pair Coeffs","Bond Coeffs","Angle Coeffs","Dihedral Coeffs","Improper Coeffs",
     #                 "Atoms","Bonds","Angles","Dihedrals","Impropers",""]
@@ -82,7 +83,7 @@ def search_chars(lmp, data_sub_str):
         pass
 
     for i in range(len(data_sub_list)):
-        if data_sub_str == data_sub_list[i]:
+        if data_sub_str in data_sub_list[i]:
             char1, char2 = char_list[i],char_list[i+1]
         else:
             pass
@@ -210,11 +211,11 @@ def read_vol(lmp):
     lmp: lammps data file
     return unit of volume: nm^3
     """
-    xyz = read_box(lmp)
-    Lx = xyz["xhi"]-xyz["xlo"]
-    Ly = xyz["yhi"]-xyz["ylo"]
-    Lz = xyz["zhi"]-xyz["zlo"]
-    vlo = Lx*Ly*Lz
+    Lxyz = read_box(lmp)
+    Lx = Lxyz["xhi"]-Lxyz["xlo"]
+    Ly = Lxyz["yhi"]-Lxyz["ylo"]
+    Lz = Lxyz["zhi"]-Lxyz["zlo"]
+    vlo = Lx*Ly*Lz*1e-3
     return vlo
 
 
@@ -287,6 +288,23 @@ def read_pdb(pdbfile,term="all"):
         return elements, xyz, conect
 
 
+def pdb2xyz(pdbfile,xyzfile):
+    """
+    convert pdb file to xyz file
+    pdbfile: pdb file
+    xyzfile: xyz file
+    """
+    elements, xyz = read_pdb(pdbfile)
+    elements = elements.split()
+    atom_number = len(elements)
+    with open(xyzfile,"w") as f:
+        f.write(str(atom_number)+"\n")
+        f.write("generted by 'readlammpsdata': https://github.com/eastsheng/readlammpsdata\n")
+        for i in range(atom_number):
+            f.write(elements[i]+"\t"+str(xyz[i][0])+"\t"+str(xyz[i][1])+"\t"+str(xyz[i][2])+"\n")
+    print("pdb2xyz successfully!")
+
+
 def read_formula(file):
     """
     read molecular formula from xyzfile or pdb file
@@ -308,6 +326,120 @@ def read_formula(file):
             chemical_formula += " "
     return chemical_formula
 
+
+def modify_pos(lmp,pdbxyz):
+    """
+    modify lammps data position by xyz or pdb file
+    lmp: lammps data
+    pdbxyz: pdb or xyz file
+    """
+    Atoms = read_data(lmp,"Atoms")
+    Atoms = str2array(Atoms)
+    m, n = Atoms.shape
+    # print(Atoms)
+    try:
+        elements, xyz = read_xyz(pdbxyz)
+    except:
+        elements, xyz = read_pdb(pdbxyz)
+    for i in range(m):
+        Atoms[i,4] = xyz[i,0]
+        Atoms[i,5] = xyz[i,1]
+        Atoms[i,6] = xyz[i,2]
+    return Atoms
+
+def modify_pore_size(lammpsdata,modify_data,modify_size=0,pdbxyz=None):
+    """
+    modify the pore size of lammpsdata
+    lammpsdata: lammps data file name
+    modify_data: rewrite lammps data file name
+    modify_size: increase or decrease pore size, unit/nm
+    pdbxyz: pdb of xyz file, modify lammpsdata position by pdb or xyz, default None
+    """
+    # modify header
+    Header = read_data(lammpsdata,"Header").split("\n")
+    for i in range(len(Header)):
+        # print(Header[i])
+        if "zlo zhi" in Header[i]:
+            Header[i] = Header[i].split()
+            Header[i][1] = float(Header[i][1])+modify_size*10
+            Header[i][1] = str(Header[i][1])
+            Header[i] = "\t".join(Header[i])
+
+    Masses = read_data(lammpsdata,"Masses")
+    PairCoeffs = read_data(lammpsdata,"Pair Coeffs")
+    BondCoeffs = read_data(lammpsdata,"Bond Coeffs")
+    AngleCoeffs = read_data(lammpsdata,"Angle Coeffs")
+    DihedralCoeffs = read_data(lammpsdata,"Dihedral Coeffs")
+    ImproperCoeffs = read_data(lammpsdata,"Improper Coeffs")
+
+    # modify Atoms
+    Lxyz = read_box(lammpsdata)
+    Lx = Lxyz["xhi"]-Lxyz["xlo"]
+    Ly = Lxyz["yhi"]-Lxyz["ylo"]
+    Lz = Lxyz["zhi"]-Lxyz["zlo"]
+    Atoms = read_data(lammpsdata,"Atoms")
+    Atoms = str2array(Atoms)
+    try:
+        Atoms = modify_pos(lammpsdata,pdbxyz)
+    except:
+        pass
+    m, n = Atoms.shape
+    for i in range(m):
+        Atoms[i,6] = float(Atoms[i,6])
+        if float(Atoms[i,6]) > (Lz/2.0):
+            Atoms[i,6] = float(Atoms[i,6]) + modify_size*10
+            Atoms[i,6] = str(Atoms[i,6])
+    # modify Bonds
+    Bonds = read_data(lammpsdata,"Bonds")
+    # print(Bonds)
+    # modify Bonds
+    Angles = read_data(lammpsdata,"Angles")
+    # print(Angles)
+    Dihedrals = read_data(lammpsdata,"Dihedrals")
+    # print(Dihedrals)
+    Impropers = read_data(lammpsdata,"Impropers")
+    # print(Impropers)
+    with open(modify_data,"w") as f:
+        for h in Header:
+            f.write(h+"\n")
+        if Masses:
+            f.write("Masses")
+            f.write(Masses)
+        if PairCoeffs:
+            f.write("Pair Coeffs")
+            f.write(PairCoeffs)
+        if BondCoeffs:
+            f.write("Bond Coeffs")
+            f.write(BondCoeffs)
+        if AngleCoeffs:
+            f.write("Angle Coeffs")
+            f.write(AngleCoeffs)
+        if DihedralCoeffs:
+            f.write("Dihedral Coeffs")
+            f.write(DihedralCoeffs)
+        if ImproperCoeffs:
+            f.write("\nImproper Coeffs")
+            f.write(ImproperCoeffs)
+
+        f.write("Atoms\n\n")
+        for i in range(m):
+            for j in range(n):
+                f.write(Atoms[i][j]+"\t")
+            f.write("\n")
+        if Bonds:
+            f.write("\nBonds")
+            f.write(Bonds)
+        if Angles:      
+            f.write("Angles")
+            f.write(Angles)
+
+        if Dihedrals:
+            f.write("Dihedrals")
+            f.write(Dihedrals)          
+        if Impropers:
+            f.write("Impropers")
+            f.write(Impropers)  
+    return
 
 
 if __name__ == '__main__':
