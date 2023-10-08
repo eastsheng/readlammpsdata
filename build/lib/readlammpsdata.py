@@ -76,11 +76,11 @@ def search_chars(lmp, data_sub_str):
     #                 "Atoms","Bonds","Angles","Dihedrals","Impropers"]                
 
 
-    if data_sub_str in ["Atoms # full", "Atoms #"]:
-        char_list[7] = "Atoms # full"
-        data_sub_list[7] = "Atoms # full"
-    else:
-        pass
+    # if data_sub_str in ["Atoms # full", "Atoms #"]:
+    #     char_list[7] = "Atoms # full"
+    #     data_sub_list[7] = "Atoms # full"
+    # else:
+    #     pass
 
     for i in range(len(data_sub_list)):
         if data_sub_str in data_sub_list[i]:

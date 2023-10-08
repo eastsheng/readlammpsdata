@@ -7,6 +7,7 @@ Author: CHENDONGSHENG
 Author-email: eastsheng@hotmail.com
 Description-Content-Type: text/markdown
 License-File: LICENSE
+Requires-Dist: numpy>=1.25.2
 
 # readlammpsdata
 
