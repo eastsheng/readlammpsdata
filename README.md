@@ -44,6 +44,9 @@ print(round(sum(charges),6))
 
 ### Fixes
 
+- 2023-10-09
+  - [x] Add the `sort_lmp` function;
+
 - 2023-10-08
   - [x] Add the `pdb2xyz` function;
   - [x] Add the `read_formula` function;

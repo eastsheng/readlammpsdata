@@ -6,7 +6,7 @@ def __version__():
     """
     read the version of readlammpsdata
     """
-    version = "1.0.5"
+    version = "1.0.6"
     return version
 
 def extract_substring(string, char1, char2):
@@ -442,6 +442,33 @@ def modify_pore_size(lammpsdata,modify_data,modify_size=0,pdbxyz=None):
             f.write("Impropers")
             f.write(Impropers)  
     return
+
+
+def sort_lmp(lmp,rewrite_lmp):
+    """
+    Sort all the contents of lmp by the first column id
+    lmp: lammps data file name that needs to be sorted
+    rewrite_lmp: the sorted lammps data file name
+    """
+    f = open(rewrite_lmp,"w")
+    Header = read_data(lmp,"Header").strip()
+    terms = read_terms(lmp)
+    f.write(Header)
+    f.write("\n")
+    for term in terms:
+        data_term = read_data(lmp,term)
+        data_term = str2array(data_term)
+        data_term = data_term[np.argsort(data_term[:,0].astype(int))]
+        f.write("\n"+term+"\n\n")
+        m, n = data_term.shape
+        for i in range(m):
+            for j in range(n):
+                f.write(data_term[i][j]+"\t")
+            f.write("\n")
+    f.close()
+    print("\nCongratulations! the sorted lmp is successfully generated !\n")
+    return
+
 
 
 if __name__ == '__main__':

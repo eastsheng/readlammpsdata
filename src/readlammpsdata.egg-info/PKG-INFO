@@ -1,13 +1,12 @@
 Metadata-Version: 2.1
 Name: readlammpsdata
-Version: 1.0.5
+Version: 1.0.6
 Summary: Read lammps data infomations.
 Home-page: https://github.com/eastsheng/readlammpsdata
 Author: CHENDONGSHENG
 Author-email: eastsheng@hotmail.com
 Description-Content-Type: text/markdown
 License-File: LICENSE
-Requires-Dist: numpy>=1.25.2
 
 # readlammpsdata
 
@@ -54,6 +53,9 @@ print(round(sum(charges),6))
 ```
 
 ### Fixes
+
+- 2023-10-09
+  - [x] Add the `sort_lmp` function;
 
 - 2023-10-08
   - [x] Add the `pdb2xyz` function;
