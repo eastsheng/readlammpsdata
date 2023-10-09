@@ -56,7 +56,8 @@ print(round(sum(charges),6))
 
 - 2023-10-09
   - [x] Add the `sort_lmp` function;
-
+  - [x] Add the `lmp2xyz` function;
+  
 - 2023-10-08
   - [x] Add the `pdb2xyz` function;
   - [x] Add the `read_formula` function;
