@@ -546,7 +546,7 @@ def lmp2xyz(lmp,xyzfile,elements=None):
             for j in range(4):
                 f.write(xyz[i,j]+"\t")
             f.write("\n")
-    
+    print("\nGenerate xyz file successfully !\n")
     return
 
 
