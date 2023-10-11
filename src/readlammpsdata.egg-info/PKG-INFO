@@ -7,6 +7,8 @@ Author: CHENDONGSHENG
 Author-email: eastsheng@hotmail.com
 Description-Content-Type: text/markdown
 License-File: LICENSE
+Requires-Dist: numpy>=1.24.0
+Requires-Dist: periodictable>=1.6.1
 
 # readlammpsdata
 

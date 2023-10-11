@@ -470,26 +470,43 @@ def sort_lmp(lmp,rewrite_lmp):
     print("\nCongratulations! the sorted lmp is successfully generated !\n")
     return
 
-def find_match(all_idMass_dict,value, tolerance=0.001):
+def find_match(all_idMass_dict,value, tolerance=0.01):
     for key, mass in all_idMass_dict.items():
         if abs(float(value) - mass) < tolerance:
             return key
     return 'CT'
+def massDict(lmp):
+    Masses = read_data(lmp,"Masses").strip().split("\n")
+    # print(Masses)
+    mass_id, mass, element= [],[],[]
+    for m in Masses:
+        m = m.split()
+        mass_id.append(m[0])
+        mass.append(m[1])
+        try:
+            element.append(m[3])
+        except:
+            pass
+    idMass_dict = dict(zip(mass_id,mass))
+    idElem_dict = dict(zip(mass_id,element))
 
-def mass2element(idMass_dict):
+    return idMass_dict, idElem_dict
+
+def mass2element(lmp):
     allelements = pt.elements
     all_idMass_dict = {}
     for element in allelements:
         if element.symbol not in ["n"]:
             all_idMass_dict[element.symbol] = element.mass
-    
+    idMass_dict, idElem_dict = massDict(lmp)
     elements_list = []
     for key, value in idMass_dict.items():
         ele = find_match(all_idMass_dict,value)
         elements_list.append(ele)
     # print(len(elements_list))
-    elements_array = np.array(elements_list).reshape((-1,1))
+    # elements_array = np.array(elements_list).reshape((-1,1))
     # print(elements_array)
+    elements_list = " ".join(elements_list)
     return elements_list
 
 def lmp2xyz(lmp,xyzfile,elements=None):
@@ -502,25 +519,13 @@ def lmp2xyz(lmp,xyzfile,elements=None):
             elements = [A list of elements]: you can specify it manually
             elements = other, such as 1, 2, 3, or lmp... : read from the 'Masses' comment of the lmp file
     """
-    Masses = read_data(lmp,"Masses").strip().split("\n")
-    mass_id, mass, element= [],[],[]
-    for m in Masses:
-        m = m.split()
-        mass_id.append(m[0])
-        mass.append(m[1])
-        try:
-            element.append(m[3])
-        except:
-            pass
-
-    idMass_dict = dict(zip(mass_id,mass))
     if elements == None:
-        element = mass2element(idMass_dict)
+        element = mass2element(lmp)
     elif isinstance(elements,list):
         element = elements
     else:
         pass
-    idElem_dict = dict(zip(mass_id,element))
+    idMass_dict, idElem_dict = massDict(lmp)
     Atoms = read_data(lmp,"Atoms").strip()
     Atoms = str2array(Atoms)
     type_id = Atoms[:,2]
