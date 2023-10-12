@@ -2,6 +2,7 @@
 import numpy as np
 from collections import Counter
 import periodictable as pt
+import msi2clayff as mc
 
 def __version__():
     """
@@ -555,10 +556,19 @@ def lmp2xyz(lmp,xyzfile,elements=None):
     return
 
 
+def msi2clayff(lmp, clayff_lmp):
+    """
+    convert a lmp obtained from msi2lmp (from Materials Studio) to clayff force field
+    lmp: original lmp obtained from msi2lmp
+    clayff_lmp: rewrite lammps data
+    """
+    mc.msi2clayff(lmp, clayff_lmp)
+    return
 
 
 if __name__ == '__main__':
 
     print(__version__())
+    # msi2clayff("sio2_1nm.data","sio2_1nm_clayff.data")
 
     
