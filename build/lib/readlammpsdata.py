@@ -730,7 +730,7 @@ def sort_tip4p_ele(dictionary,index,ele='O'):
 
     return new_dictionary
 
-def lmp2tip4p(lmp,tip4p_lmp):
+def lmp2tip4p(lmp,tip4p_lmp,ua=True):
     """
     lmp to tip4p format, O-H-H
     lmp: lmp from Materials studio using "msi2lmp.exe"
@@ -739,28 +739,83 @@ def lmp2tip4p(lmp,tip4p_lmp):
     f = open(tip4p_lmp,"w")
     # 0. ------> read Header
     Header = read_data(lmp,"Header")
-    f.write(Header)
+    if ua == True:
+        Bonds = str2array(read_data(lmp,"Bonds"))
+        ua_nbond = np.count_nonzero(Bonds[:,1]=="1")
+        Angles = str2array(read_data(lmp,"Angles"))
+        ua_nangle = np.count_nonzero(Angles[:,1]=="1")
+        Header = Header.split("\n")
+        for i in range(len(Header)):
+            if "bonds" in Header[i]:
+                Header[i] = Header[i].strip().split()
+                Header[i][0] = str(ua_nbond)
+                Header[i] = " ".join(Header[i])
+                Header[i] = "\t"+Header[i]
+            if "angles" in Header[i]:
+                Header[i] = Header[i].strip().split()
+                Header[i][0] = str(ua_nangle)
+                Header[i] = " ".join(Header[i])
+                Header[i] = "\t"+Header[i]
+            if "bond types" in Header[i]:
+                Header[i] = Header[i].strip().split()
+                Header[i][0] = "1"
+                Header[i] = " ".join(Header[i])
+                Header[i] = "\t"+Header[i]
+            if "angle types" in Header[i]:
+                Header[i] = Header[i].strip().split()
+                Header[i][0] = "1"
+                Header[i] = " ".join(Header[i])
+                Header[i] = "\t"+Header[i]
+            f.write(Header[i]+"\n")
+    else:
+        f.write(Header)
     # 1. ------> modify masses
     elements = mass2element(lmp).split()
     elements = {i: value for i, value in enumerate(elements,1)}
     old_keys = list(elements)
     elements = sort_tip4p_ele(elements,index=1,ele='O')
     elements = sort_tip4p_ele(elements,index=2,ele='H')
+    # print(elements)
     f.write("Masses\n\n")
-    for key, value in elements.items():
-        mass = pt.elements.symbol(value).mass
-        f.write("\t"+str(key)+"\t"+str(mass)+"\t# "+value+"\n")
+    if ua == True:
+        count_mass = 0
+        for key, value in elements.items():
+            mass = pt.elements.symbol(value).mass
+            count_mass += 1
+            if count_mass == 3:
+                mass = mass + 4*pt.elements.symbol("H").mass
+                f.write("\t"+str(count_mass)+"\t"+str(mass)+"\t# "+value+"\n")
+            elif count_mass == 4:
+                pass
+            else:
+                f.write("\t"+str(count_mass)+"\t"+str(mass)+"\t# "+value+"\n")
+    else:
+        count_mass = 0
+        for key, value in elements.items():
+            mass = pt.elements.symbol(value).mass
+            count_mass += 1
+            f.write("\t"+str(count_mass)+"\t"+str(mass)+"\t# "+value+"\n")
 
     # 2. ------> modify Pair Coeffs
     new_keys = list(elements)
     PairCoeffs = read_data(lmp,"Pair Coeffs").strip("\n").split("\n")
-    for i in range(len(PairCoeffs)):
-        p = PairCoeffs[i]
-        if PairCoeffs[i] !="":
-            PairCoeffs[i] = PairCoeffs[i].strip().split()
-            PairCoeffs[i][0] = str(new_keys[i])
-
-    PairCoeffs.sort(key=lambda x: int(x[0]))    
+    
+    if ua == True:
+        for i in range(len(PairCoeffs)):
+            if PairCoeffs[i] != "":
+                PairCoeffs[i] = PairCoeffs[i].strip().split()
+                PairCoeffs[i][0] = str(new_keys[i])
+                if PairCoeffs[i][0] == "3":
+                    PairCoeffs[i][1] = "0.294"
+                    PairCoeffs[i][2] = "3.73"
+    else:
+        for i in range(len(PairCoeffs)):
+            if PairCoeffs[i] != "":
+                PairCoeffs[i] = PairCoeffs[i].strip().split()
+                PairCoeffs[i][0] = str(new_keys[i])
+    PairCoeffs.sort(key=lambda x: int(x[0]))
+    if ua == True:
+        PairCoeffs = PairCoeffs[:-1]
     f.write("\nPair Coeffs\n\n")
     for k in PairCoeffs:
         d = "\t".join(k)
@@ -768,14 +823,16 @@ def lmp2tip4p(lmp,tip4p_lmp):
 
     # 3. ------> read Bond Coeffs
     BondCoeffs = read_data(lmp,"Bond Coeffs").strip("\n").split("\n")
-    numOfBond = len(BondCoeffs)
     f.write("\nBond Coeffs\n\n")
+    if ua == True:
+        BondCoeffs = BondCoeffs[:-1]
     for b in BondCoeffs:
         f.write(b+"\n")
 
     # 4. ------> read Angle Coeffs
     AngleCoeffs = read_data(lmp,"Angle Coeffs").strip("\n").split("\n")
-    numOfAngle = len(AngleCoeffs)
+    if ua == True:
+        AngleCoeffs = AngleCoeffs[:-1]
     f.write("\nAngle Coeffs\n\n")
     for b in AngleCoeffs:
         f.write(b+"\n")
@@ -808,10 +865,22 @@ def lmp2tip4p(lmp,tip4p_lmp):
         sorted_Atoms[i][0] = str(i+1)
     na, nb = sorted_Atoms.shape
     f.write("\nAtoms\n\n")
-    for i in range(na):
-        for j in range(nb):
-            f.write("\t"+sorted_Atoms[i][j]+"\t")
-        f.write("\n")
+    if ua == True:
+        count_atoms = 0
+        for i in range(na):
+            if sorted_Atoms[i][2]=="4":
+                pass
+            else:
+                count_atoms += 1
+                f.write("\t"+str(count_atoms)+"\t")
+                for j in range(1,nb):
+                    f.write("\t"+sorted_Atoms[i][j]+"\t")
+                f.write("\n")
+    else:
+        for i in range(na):
+            for j in range(nb):
+                f.write("\t"+sorted_Atoms[i][j]+"\t")
+            f.write("\n")
 
     # 7. modify Bonds and Angles by the newest sorted_Atoms
     f.write("\nBonds\n\n")
@@ -820,29 +889,36 @@ def lmp2tip4p(lmp,tip4p_lmp):
         if sorted_Atoms[i][2] == "1":
             for j in range(2):
                 count_nbond += 1
-                f.write(str(count_nbond)+"\t"+str(1)+"\t"+sorted_Atoms[i][0]+"\t"+str(int(sorted_Atoms[i][0])+j+1)+"\n")
-        if sorted_Atoms[i][2] == "3":
-            for k in range(4):
-                count_nbond += 1
-                f.write(str(count_nbond)+"\t"+str(2)+"\t"+sorted_Atoms[i][0]+"\t"+str(int(sorted_Atoms[i][0])+k+1)+"\n")
-    
+                f.write("\t"+str(count_nbond)+"\t"+str(1)+"\t"+sorted_Atoms[i][0]+"\t"+str(int(sorted_Atoms[i][0])+j+1)+"\n")
+        if ua == True:
+            pass
+        else:
+            if sorted_Atoms[i][2] == "3":
+                for k in range(4):
+                    count_nbond += 1
+                    f.write("\t"+str(count_nbond)+"\t"+str(2)+"\t"+sorted_Atoms[i][0]+"\t"+str(int(sorted_Atoms[i][0])+k+1)+"\n")
+        
     f.write("\nAngles\n\n")
     count_nangle = 0
     for i in range(na):
         if sorted_Atoms[i][2] == "1":
             count_nangle += 1
-            f.write(str(count_nangle)+"\t"+str(1)+"\t"+str(int(sorted_Atoms[i][0])+1)+"\t"+sorted_Atoms[i][0]+"\t"+str(int(sorted_Atoms[i][0])+2)+"\n")
-        if sorted_Atoms[i][2] == "3":
-            for k in range(3):
-                count_nangle += 1
-                f.write(str(count_nangle)+"\t"+str(2)+"\t"+str(int(sorted_Atoms[i][0])+1)+"\t"+sorted_Atoms[i][0]+"\t"+str(int(sorted_Atoms[i][0])+k+2)+"\n")
-            for k in range(2):
-                count_nangle += 1
-                f.write(str(count_nangle)+"\t"+str(2)+"\t"+str(int(sorted_Atoms[i][0])+2)+"\t"+sorted_Atoms[i][0]+"\t"+str(int(sorted_Atoms[i][0])+k+3)+"\n")
-            for k in range(1):
-                count_nangle += 1
-                f.write(str(count_nangle)+"\t"+str(2)+"\t"+str(int(sorted_Atoms[i][0])+3)+"\t"+sorted_Atoms[i][0]+"\t"+str(int(sorted_Atoms[i][0])+k+4)+"\n")
+            f.write("\t"+str(count_nangle)+"\t"+str(1)+"\t"+str(int(sorted_Atoms[i][0])+1)+"\t"+sorted_Atoms[i][0]+"\t"+str(int(sorted_Atoms[i][0])+2)+"\n")
+        if ua == True:
+            pass
+        else:
+            if sorted_Atoms[i][2] == "3":
+                for k in range(3):
+                    count_nangle += 1
+                    f.write("\t"+str(count_nangle)+"\t"+str(2)+"\t"+str(int(sorted_Atoms[i][0])+1)+"\t"+sorted_Atoms[i][0]+"\t"+str(int(sorted_Atoms[i][0])+k+2)+"\n")
+                for k in range(2):
+                    count_nangle += 1
+                    f.write("\t"+str(count_nangle)+"\t"+str(2)+"\t"+str(int(sorted_Atoms[i][0])+2)+"\t"+sorted_Atoms[i][0]+"\t"+str(int(sorted_Atoms[i][0])+k+3)+"\n")
+                for k in range(1):
+                    count_nangle += 1
+                    f.write("\t"+str(count_nangle)+"\t"+str(2)+"\t"+str(int(sorted_Atoms[i][0])+3)+"\t"+sorted_Atoms[i][0]+"\t"+str(int(sorted_Atoms[i][0])+k+4)+"\n")
     f.close()
+    print("\nConvert TIP4P lmp successfully !\n")
     return
 
 
