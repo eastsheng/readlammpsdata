@@ -48,6 +48,7 @@ print(round(sum(charges),6))
   - [x] Add the `sort_lmp` function;
   - [x] Add the `lmp2xyz` function;
   - [x] Add the `msi2clayff` function;
+  - [x] Add the `lmp2tip4p` function;
   
 - 2023-10-08
   - [x] Add the `pdb2xyz` function;
