@@ -695,6 +695,157 @@ def msi2clayff(lmp, clayff_lmp):
             f.write("\n")
 
     return
+
+
+
+def sort_tip4p_ele(dictionary,index,ele='O'):
+    """
+    If the value of the first element in the dictionary is not 'O', 
+    the key value of the subsequent element is 'O'
+    dictionary: element dict, such as {1: 'O', 3: 'H', 2: 'C', 4: 'H'}
+    index: 1 or 2
+    ele: 'O' or "H"
+    """
+    modify_key = 1
+    if dictionary[index] != ele:
+        for key, value in dictionary.items():
+            if value == ele and key>index:
+                modify_key=key
+                dictionary[index], dictionary[key] = dictionary[key], dictionary[index]
+                break
+
+    old_keys = list(dictionary)
+    new_keys = []
+    for k in old_keys:
+        if k == index:
+            new_keys.append(modify_key)
+        elif k == modify_key:
+            new_keys.append(index)
+        else:
+            new_keys.append(k)
+    new_dictionary = {}
+    for key in old_keys:
+        value = dictionary.pop(key)
+        new_dictionary.update({new_keys[old_keys.index(key)] : value})
+
+    return new_dictionary
+
+def lmp2tip4p(lmp,tip4p_lmp):
+    """
+    lmp to tip4p format, O-H-H
+    lmp: lmp from Materials studio using "msi2lmp.exe"
+    tip4p_lmp: tip4p lammps data
+    """
+    f = open(tip4p_lmp,"w")
+    # 0. ------> read Header
+    Header = read_data(lmp,"Header")
+    f.write(Header)
+    # 1. ------> modify masses
+    elements = mass2element(lmp).split()
+    elements = {i: value for i, value in enumerate(elements,1)}
+    old_keys = list(elements)
+    elements = sort_tip4p_ele(elements,index=1,ele='O')
+    elements = sort_tip4p_ele(elements,index=2,ele='H')
+    f.write("Masses\n\n")
+    for key, value in elements.items():
+        mass = pt.elements.symbol(value).mass
+        f.write("\t"+str(key)+"\t"+str(mass)+"\t# "+value+"\n")
+
+    # 2. ------> modify Pair Coeffs
+    new_keys = list(elements)
+    PairCoeffs = read_data(lmp,"Pair Coeffs").strip("\n").split("\n")
+    for i in range(len(PairCoeffs)):
+        p = PairCoeffs[i]
+        if PairCoeffs[i] !="":
+            PairCoeffs[i] = PairCoeffs[i].strip().split()
+            PairCoeffs[i][0] = str(new_keys[i])
+
+    PairCoeffs.sort(key=lambda x: int(x[0]))    
+    f.write("\nPair Coeffs\n\n")
+    for k in PairCoeffs:
+        d = "\t".join(k)
+        f.write("\t"+d+"\n")
+
+    # 3. ------> read Bond Coeffs
+    BondCoeffs = read_data(lmp,"Bond Coeffs").strip("\n").split("\n")
+    numOfBond = len(BondCoeffs)
+    f.write("\nBond Coeffs\n\n")
+    for b in BondCoeffs:
+        f.write(b+"\n")
+
+    # 4. ------> read Angle Coeffs
+    AngleCoeffs = read_data(lmp,"Angle Coeffs").strip("\n").split("\n")
+    numOfAngle = len(AngleCoeffs)
+    f.write("\nAngle Coeffs\n\n")
+    for b in AngleCoeffs:
+        f.write(b+"\n")
+
+    # 5. ------> read Bonds
+    Bonds = str2array(read_data(lmp,"Bonds"))
+    # default the type 1 is the O-H bond
+    new_water_order, other_order = [], []
+    m,n = Bonds.shape
+    for i in range(m):
+        if Bonds[i][1] == "1":
+            new_water_order.append(Bonds[i][2])
+            new_water_order.append(Bonds[i][3])
+        else:
+            other_order.append(Bonds[i][2])
+            other_order.append(Bonds[i][3])
+    new_water_order = [x for i, x in enumerate(new_water_order) if x not in new_water_order[:i]]
+    other_order = [x for i, x in enumerate(other_order) if x not in other_order[:i]]
+    new_atom_order = new_water_order+other_order
+
+    # 6. ------> modify Atoms
+    Atoms = str2array(read_data(lmp,"Atoms"))
+    # sorted by new_atom_order
+    sort_dict = {k: v for v, k in enumerate(new_atom_order)}
+    sorted_Atoms = Atoms[np.argsort([sort_dict.get(x) for x in Atoms[:, 0]])]
+    # modify atom type by old_keys and new_keys
+    key_dict = {k: v for k, v in zip(old_keys, new_keys)}
+    for i in range(len(sorted_Atoms)):
+        sorted_Atoms[i][2] = key_dict[int(sorted_Atoms[i][2])]
+        sorted_Atoms[i][0] = str(i+1)
+    na, nb = sorted_Atoms.shape
+    f.write("\nAtoms\n\n")
+    for i in range(na):
+        for j in range(nb):
+            f.write("\t"+sorted_Atoms[i][j]+"\t")
+        f.write("\n")
+
+    # 7. modify Bonds and Angles by the newest sorted_Atoms
+    f.write("\nBonds\n\n")
+    count_nbond = 0
+    for i in range(na):
+        if sorted_Atoms[i][2] == "1":
+            for j in range(2):
+                count_nbond += 1
+                f.write(str(count_nbond)+"\t"+str(1)+"\t"+sorted_Atoms[i][0]+"\t"+str(int(sorted_Atoms[i][0])+j+1)+"\n")
+        if sorted_Atoms[i][2] == "3":
+            for k in range(4):
+                count_nbond += 1
+                f.write(str(count_nbond)+"\t"+str(2)+"\t"+sorted_Atoms[i][0]+"\t"+str(int(sorted_Atoms[i][0])+k+1)+"\n")
+    
+    f.write("\nAngles\n\n")
+    count_nangle = 0
+    for i in range(na):
+        if sorted_Atoms[i][2] == "1":
+            count_nangle += 1
+            f.write(str(count_nangle)+"\t"+str(1)+"\t"+str(int(sorted_Atoms[i][0])+1)+"\t"+sorted_Atoms[i][0]+"\t"+str(int(sorted_Atoms[i][0])+2)+"\n")
+        if sorted_Atoms[i][2] == "3":
+            for k in range(3):
+                count_nangle += 1
+                f.write(str(count_nangle)+"\t"+str(2)+"\t"+str(int(sorted_Atoms[i][0])+1)+"\t"+sorted_Atoms[i][0]+"\t"+str(int(sorted_Atoms[i][0])+k+2)+"\n")
+            for k in range(2):
+                count_nangle += 1
+                f.write(str(count_nangle)+"\t"+str(2)+"\t"+str(int(sorted_Atoms[i][0])+2)+"\t"+sorted_Atoms[i][0]+"\t"+str(int(sorted_Atoms[i][0])+k+3)+"\n")
+            for k in range(1):
+                count_nangle += 1
+                f.write(str(count_nangle)+"\t"+str(2)+"\t"+str(int(sorted_Atoms[i][0])+3)+"\t"+sorted_Atoms[i][0]+"\t"+str(int(sorted_Atoms[i][0])+k+4)+"\n")
+    f.close()
+    return
+
+
 if __name__ == '__main__':
 
     print(__version__())
