@@ -35,8 +35,10 @@ pip install readlammpsdata
 import readlammpsdata as rld
 
 # 0. read Atoms, Masses etc.
-Atoms = rld.read_data(lammpsdata.lmp, data_sub_str = "Atoms # full")
-Masses = rld.read_data(lammpsdata.lmp, data_sub_str = "Masses")
+Atoms = rld.read_data(lmp, data_sub_str = "Atoms # full")
+Masses = rld.read_data(lmp, data_sub_str = "Masses")
+PairCoeffs = rld.read_data(lmp, data_sub_str = "Pair Coeffs")
+Bonds = rld.read_data(lmp, data_sub_str = "Bonds")
 
 # 1. read box size
 xyz = rld.read_box(lmp)
@@ -52,6 +54,7 @@ print("Number of atoms is %s" %Natoms)
 charges = rld.read_charges(lmp)
 print("Charges of atoms are %s" %charges)
 print(round(sum(charges),6))
+# 4. ......
 ```
 
 ### Fixes

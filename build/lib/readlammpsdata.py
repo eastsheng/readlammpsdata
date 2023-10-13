@@ -32,10 +32,10 @@ def read_data_sub(wholestr,sub_char,char1,char2):
     try:
         sub = extract_substring(wholestr, char1,char2)
         sub.strip()
-        print("Read data "+sub_char+" successfully !")
+        print(">>> Read data "+sub_char+" successfully !")
         return sub
     except:
-        return "Warning: There is no "+sub_char+" term in your data!"
+        return "??? Warning: There is no "+sub_char+" term in your data!"
 
 def read_terms(lmp):
     """
@@ -92,7 +92,7 @@ def search_chars(lmp, data_sub_str):
         return char1, char2
     except:
         char1, char2 = "",""
-        print("Warning: '"+data_sub_str+"' not found in your data!")     
+        print("??? Warning: '"+data_sub_str+"' not found in your data!")     
     return char1, char2
 
 def read_data(lmp, data_sub_str):
@@ -147,7 +147,7 @@ def read_box(lmp):
                     try:
                         x = extract_substring(Header,"bond types","xlo xhi").strip().split()
                     except:
-                        print("Error: No find 'xlo xhi'!")
+                        print("??? Error: No find 'xlo xhi'!")
     
     y = extract_substring(Header,"xlo xhi","ylo yhi").strip().split()
     z = extract_substring(Header,"ylo yhi","zlo zhi").strip().split()
@@ -303,7 +303,7 @@ def pdb2xyz(pdbfile,xyzfile):
         f.write("generted by 'readlammpsdata': https://github.com/eastsheng/readlammpsdata\n")
         for i in range(atom_number):
             f.write(elements[i]+"\t"+str(xyz[i][0])+"\t"+str(xyz[i][1])+"\t"+str(xyz[i][2])+"\n")
-    print("pdb2xyz successfully!")
+    print(">>> pdb2xyz successfully!")
 
 
 def read_formula(file):
@@ -467,7 +467,7 @@ def sort_lmp(lmp,rewrite_lmp):
                 f.write(data_term[i][j]+"\t")
             f.write("\n")
     f.close()
-    print("\nCongratulations! the sorted lmp is successfully generated !\n")
+    print("\n>>> Congratulations! the sorted lmp is successfully generated !\n")
     return
 
 def find_match(all_idMass_dict,value, tolerance=0.01):
@@ -551,7 +551,7 @@ def lmp2xyz(lmp,xyzfile,elements=None):
             for j in range(4):
                 f.write(xyz[i,j]+"\t")
             f.write("\n")
-    print("\nGenerate xyz file successfully !\n")
+    print("\n>>> Generate xyz file successfully !\n")
     return
 
 
@@ -730,7 +730,7 @@ def sort_tip4p_ele(dictionary,index,ele='O'):
 
     return new_dictionary
 
-def lmp2tip4p(lmp,tip4p_lmp,ua=True):
+def lmp2tip4p(lmp,tip4p_lmp,ua=False):
     """
     lmp to tip4p format, O-H-H
     lmp: lmp from Materials studio using "msi2lmp.exe"
@@ -918,7 +918,11 @@ def lmp2tip4p(lmp,tip4p_lmp,ua=True):
                     count_nangle += 1
                     f.write("\t"+str(count_nangle)+"\t"+str(2)+"\t"+str(int(sorted_Atoms[i][0])+3)+"\t"+sorted_Atoms[i][0]+"\t"+str(int(sorted_Atoms[i][0])+k+4)+"\n")
     f.close()
-    print("\nConvert TIP4P lmp successfully !\n")
+    if ua == True:
+        print("\n>>> Convert TIP4P/CH4 lmp successfully !\n")
+    else:
+        print("\n>>> Convert TIP4P/CT lmp successfully !\n")
+
     return
 
 
