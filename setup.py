@@ -5,6 +5,7 @@ twine upload dist/*
 """
 
 from setuptools import setup, find_packages
+from src.readlammpsdata import __version__
 
 with open("README.md", "r") as f:
     long_description = f.read()
@@ -12,10 +13,11 @@ with open("README.md", "r") as f:
 with open("requirements.txt","r") as f:
     required = f.read().splitlines()
 
+version = __version__()
 
 setup(
 name         = 'readlammpsdata',
-version      = '1.0.6',
+version      = version,
 py_modules   = ['readlammpsdata'],
 author       = 'CHENDONGSHENG',
 author_email = 'eastsheng@hotmail.com',
