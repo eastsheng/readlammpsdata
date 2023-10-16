@@ -7,7 +7,7 @@ def __version__():
     """
     read the version of readlammpsdata
     """
-    version = "1.0.6"
+    version = "1.0.7"
     return version
 
 def extract_substring(string, char1, char2):
@@ -924,6 +924,175 @@ def lmp2tip4p(lmp,tip4p_lmp,ua=False):
         print("\n>>> Convert TIP4P/CT lmp successfully !\n")
 
     return
+
+
+
+def array2str(array):
+    """
+    convert a array to string format for writing directly. 
+    array: a array
+    """
+    string = ""
+    for row in array:
+        string += "  ".join(row)+"\n"
+    string = "\n\n"+string+"\n"
+    return string
+
+
+def add_atoms(Atoms, add_atoms):
+    """
+    add position at the end of Atoms, Bonds, Angles, return a string
+    Atoms: original Atoms, string
+    add_atoms: new positions, list
+    """
+    add_atoms = np.array(add_atoms)
+    Atoms = str2array(Atoms)
+    New_Atoms = np.concatenate((Atoms, add_atoms), axis=0)
+    New_Atoms = array2str(New_Atoms)
+
+    return New_Atoms
+
+def modify_header(Header,hterm,number):
+    """
+    modify the "Header" info, including number of "atoms", "bonds", "angles", "dihedrals", "impropers",
+    "atom types", "bond types", "angle types", "dihedral types", "improper types",
+    "xlo xhi", "ylo yhi", "zlo zhi".
+    Header: Header
+    hterm: "atoms", "bonds"
+    number: number of "atoms", "bonds"...
+    """
+    Header = Header.strip().split("\n")
+    for i in range(len(Header)):
+        if Header[i]!="":
+            Header[i] = Header[i].strip()
+            if hterm in Header[i]:
+                Header[i] = Header[i].split()
+                if len(Header[i]) == 2:
+                    Header[i][0] = str(number)
+                    Header[i] = "  ".join(Header[i])
+                elif len(Header[i]) == 3:
+                    Header[i][0] = str(number)
+                    Header[i] = " ".join(Header[i])
+    Header = "\n".join(Header)+"\n\n"
+    return Header
+
+def modify_methane_hydrate(lmp, relmp, axis="z",distance=1.1):
+    """
+    add methane molecules into half cages at the interface for its symmetry in pore, ppp to ppf
+    lmp: original lmp
+    relmp: rewrite lmp
+    axis: direction x y z, default axis="z"
+    """
+    terms = read_terms(lmp)
+    box = read_box(lmp)
+    xlo = float(box["xlo"])
+    xhi = float(box["xhi"])
+    ylo = float(box["ylo"])
+    yhi = float(box["yhi"])
+    zlo = float(box["zlo"])
+    zhi = float(box["zhi"])
+    lx = xhi-xlo
+    ly = yhi-ylo
+    lz = zhi-zlo
+    if axis == "x" or axis == "X":
+        ll = lx
+        index = 4
+    if axis == "y" or axis == "Y":
+        ll = ly
+        index = 5
+    if axis == "z" or axis == "Z":
+        ll = lz
+        index = 6
+    Header = read_data(lmp,"Header")
+    # 1. modify atoms
+    Atoms_string = read_data(lmp,"Atoms")
+    Atoms = str2array(Atoms_string)
+    m,n = Atoms.shape
+    Natoms = m
+    add_methanes = []
+    add_atom_old_id = []
+    add_atom_new_id = []
+    for i in range(m):
+        if abs(float(Atoms[i][index])-zlo) < distance:
+            Natoms = Natoms + 1
+            add_atom_old_id.append(Atoms[i][0])
+            Atoms[i][0] = str(Natoms)
+            add_atom_new_id.append(Atoms[i][0])
+            Atoms[i][index] = str(ll-float(Atoms[i][index]))
+            add_methanes.append(Atoms[i].tolist())
+    # print(add_methanes)
+    nO,nH = 0,0
+    for i in range(len(add_methanes)):
+        if add_methanes[i][2] == "1":
+            nO += 1
+        elif add_methanes[i][2] == "2":
+            nH += 1
+    if nH%nO != 0:
+        print("??? Your operation is error! Please check and modify your 'distance' arg...")
+    Atoms = add_atoms(Atoms_string,add_methanes)
+
+    # 2. modify bonds
+    Bonds_string = read_data(lmp,"Bonds")
+    Bonds = str2array(Bonds_string)
+    p,q = Bonds.shape
+    Nbonds = p
+    add_bonds = []
+    for i in range(p):
+        concent = Bonds[i][2:]
+        for j in range(len(add_atom_old_id)):
+            if add_atom_old_id[j] == concent[0]:
+                Bonds[i][2] = add_atom_new_id[j]
+            elif add_atom_old_id[j] == concent[1]:
+                Bonds[i][3] = add_atom_new_id[j]
+                add_bonds.append(Bonds[i].tolist())
+    for i in range(len(add_bonds)):
+        Nbonds += 1
+        add_bonds[i][0] = str(Nbonds)
+    # print(add_bonds)
+    Bonds = add_atoms(Bonds_string,add_bonds)
+
+    # 3. modify angles
+    Angles_string = read_data(lmp,"Angles")
+    Angles = str2array(Angles_string)
+    s,t = Angles.shape
+    NAngles = s
+    # print(NAngles)
+    add_angles = []
+    for i in range(s):
+        concent = Angles[i][2:]
+        for j in range(len(add_atom_old_id)):
+            if add_atom_old_id[j] == concent[0]:
+                Angles[i][2] = add_atom_new_id[j]
+            elif add_atom_old_id[j] == concent[1]:
+                Angles[i][3] = add_atom_new_id[j]
+            elif add_atom_old_id[j] == concent[2]:
+                Angles[i][4] = add_atom_new_id[j]
+                add_angles.append(Angles[i].tolist())
+    for i in range(len(add_angles)):
+        NAngles += 1
+        add_angles[i][0] = str(NAngles)
+    Angles = add_atoms(Angles_string,add_angles)
+
+    with open(relmp,"w") as f:
+        Header = modify_header(Header,hterm="atoms",number=Natoms)
+        Header = modify_header(Header,hterm="bonds",number=Nbonds)
+        Header = modify_header(Header,hterm="angles",number=NAngles)
+        f.write(Header)
+        for term in terms:
+            if "Atoms" in term:
+                term_info = Atoms
+            elif "Bonds" in term:
+                term_info = Bonds
+            elif "Angles" in term:
+                term_info = Angles
+            else:
+                term_info = read_data(lmp,term)
+            f.write(term)
+            f.write(term_info)
+
+    return
+
+
 
 
 if __name__ == '__main__':
