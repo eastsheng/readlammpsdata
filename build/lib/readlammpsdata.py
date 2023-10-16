@@ -205,6 +205,26 @@ def read_charges(lmp):
 
     return charges
 
+def read_len(lmp,direction):
+    """
+    read length of box:
+    lmp: lammps data file
+    direction: direction, direction = x, or y, or z, then return Lx, or Ly, or Lz 
+    """
+    Lxyz = read_box(lmp)
+    Lx = Lxyz["xhi"]-Lxyz["xlo"]
+    Ly = Lxyz["yhi"]-Lxyz["ylo"]
+    Lz = Lxyz["zhi"]-Lxyz["zlo"]
+    if direction == "x" or direction == "X":
+        ll = Lx
+    elif direction == "y" or direction == "Y":
+        ll = Ly
+    elif direction == "z" or direction == "Z":
+        ll = Lz
+
+    print(">>> Read size of",direction, "direction successfully !")
+    return ll
+
 
 def read_vol(lmp):
     """
@@ -212,11 +232,13 @@ def read_vol(lmp):
     lmp: lammps data file
     return unit of volume: nm^3
     """
-    Lxyz = read_box(lmp)
-    Lx = Lxyz["xhi"]-Lxyz["xlo"]
-    Ly = Lxyz["yhi"]-Lxyz["ylo"]
-    Lz = Lxyz["zhi"]-Lxyz["zlo"]
+    Lx = read_len(lmp,direc="x")
+    Ly = read_len(lmp,direc="y")
+    Lz = read_len(lmp,direc="z")
+
     vlo = Lx*Ly*Lz*1e-3
+
+    print(">>> Read volume of system successfully !")
     return vlo
 
 
@@ -325,6 +347,8 @@ def read_formula(file):
         if count > 1:
             chemical_formula += str(count)
             chemical_formula += " "
+    
+    print(">>> Read formula from xyzfile or pdb file successfully !")
     return chemical_formula
 
 
@@ -346,6 +370,8 @@ def modify_pos(lmp,pdbxyz):
         Atoms[i,4] = xyz[i,0]
         Atoms[i,5] = xyz[i,1]
         Atoms[i,6] = xyz[i,2]
+
+    print(">>> Modified lammps data position by xyz or pdb file successfully !")
     return Atoms
 
 def modify_pore_size(lammpsdata,modify_data,modify_size=0,pdbxyz=None):
@@ -442,6 +468,8 @@ def modify_pore_size(lammpsdata,modify_data,modify_size=0,pdbxyz=None):
         if Impropers:
             f.write("Impropers")
             f.write(Impropers)  
+
+    print("\n>>> Modified the pore size of lammpsdata successfully !\n")
     return
 
 
@@ -493,6 +521,10 @@ def massDict(lmp):
     return idMass_dict, idElem_dict
 
 def mass2element(lmp):
+    """
+    Convert the masses obtained from lammps data to element symbols
+    lmp: lammps data
+    """
     allelements = pt.elements
     all_idMass_dict = {}
     for element in allelements:
@@ -507,6 +539,8 @@ def mass2element(lmp):
     # elements_array = np.array(elements_list).reshape((-1,1))
     # print(elements_array)
     elements_list = " ".join(elements_list)
+
+    print("\n>>> Convert the masses obtained from lammps data to element symbols successfully !\n")
     return elements_list
 
 def lmp2xyz(lmp,xyzfile,elements=None):
@@ -551,7 +585,7 @@ def lmp2xyz(lmp,xyzfile,elements=None):
             for j in range(4):
                 f.write(xyz[i,j]+"\t")
             f.write("\n")
-    print("\n>>> Generate xyz file successfully !\n")
+    print("\n>>> Convert lammps data (lmp) file to xyz file successfully !\n")
     return
 
 
@@ -693,7 +727,7 @@ def msi2clayff(lmp, clayff_lmp):
                 new_angles[i][0] = str(i+1)
                 f.write(new_angles[i][j]+"\t")
             f.write("\n")
-
+    print("\n>>> Convert a lmp obtained from msi2lmp to clayff force field successfully !\n")
     return
 
 
@@ -936,6 +970,8 @@ def array2str(array):
     for row in array:
         string += "  ".join(row)+"\n"
     string = "\n\n"+string+"\n"
+    print("\n>>> Convert a array to a string for writing successfully !\n")
+
     return string
 
 
@@ -974,6 +1010,8 @@ def modify_header(Header,hterm,number):
                     Header[i][0] = str(number)
                     Header[i] = " ".join(Header[i])
     Header = "\n".join(Header)+"\n\n"
+    print("\n>>>  modify the Header "+ hterm +" successfully !\n")
+
     return Header
 
 def modify_methane_hydrate(lmp, relmp, axis="z",distance=1.1):
@@ -1089,6 +1127,7 @@ def modify_methane_hydrate(lmp, relmp, axis="z",distance=1.1):
                 term_info = read_data(lmp,term)
             f.write(term)
             f.write(term_info)
+    print("\n>>>  Add methane molecules into half cages at the interface successfully !\n")
 
     return
 
