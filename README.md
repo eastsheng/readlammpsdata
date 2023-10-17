@@ -47,34 +47,33 @@ print(round(sum(charges),6))
 
 ### Fixes
 
+- 2023-10-17
+  - [x] Added the `move_boundary` function;
 - 2023-10-16
-
-  - [x] Add the `modify_methane_hydrate` function;
-  - [x] Add the `modify_header` function;
-  - [x] Add the `add_atoms` function;
-  - [x] Add the `array2str` function;
-
+  - [x] Added the `modify_methane_hydrate` function;
+  - [x] Added  the `modify_header` function;
+  - [x] Added the `add_atoms` function;
+  - [x] Added the `array2str` function;
 - 2023-10-12
 
-  - [x] Add the `sort_lmp` function;
+  - [x] Added the `sort_lmp` function;
 
-  - [x] Add the `lmp2xyz` function;
-  - [x] Add the `msi2clayff` function;
-  - [x] Add the `lmp2tip4p` function;
-
+  - [x] Added  the `lmp2xyz` function;
+  - [x] Added the `msi2clayff` function;
+  - [x] Added the `lmp2tip4p` function;
 - 2023-10-08
-  - [x] Add the `pdb2xyz` function;
-  - [x] Add the `read_formula` function;
-  - [x] Add the `modify_pos` function;
-  - [x] Add the `modify_pore_size` function;
+  - [x] Added the `pdb2xyz` function;
+  - [x] Added the `read_formula` function;
+  - [x] Added the `modify_pos` function;
+  - [x] Added the `modify_pore_size` function;
 - 2023-09-23
-  - [x] Replace the `read_Natoms` to the `read_atom_info` function;
-  - [x] Add the `read_vol` function;
-  - [x] Add the `read_xyz` function;
-  - [x] Add the `read_pdb` function;
+  - [x] Replaced the `read_Natoms` to the `read_atom_info` function;
+  - [x] Added the `read_vol` function;
+  - [x] Added the `read_xyz` function;
+  - [x] Added the `read_pdb` function;
 - 2023-09-22
-  - [x] Add the `read_terms` function for reading complex LAMMPS data;
+  - [x] Added the `read_terms` function for reading complex LAMMPS data;
 - 2023-09-11
-  - [x] Add `read_box ` function;
-  - [x] Add `read_Natoms ` function;
-  - [x] Add `read_charges ` function;
+  - [x] Added `read_box ` function;
+  - [x] Added `read_Natoms ` function;
+  - [x] Added `read_charges ` function;

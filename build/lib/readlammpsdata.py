@@ -1131,7 +1131,53 @@ def modify_methane_hydrate(lmp, relmp, axis="z",distance=1.1):
 
     return
 
-
+def move_boundary(lmp,relmp,distance,direction="y"):
+    """
+    move boundary of lammps data
+    lmp: original lammps data
+    relmp: rewrite lammps data
+    distance: distance moved, unit/A
+    direction: direction, default direction = "y"
+    """
+    if direction == "x" or direction == "X":
+        lo_label, hi_label = "xlo", "xhi"
+        index = 4
+    elif direction == "y" or direction == "Y":
+        lo_label, hi_label = "ylo", "yhi"
+        index = 5
+    elif direction == "z" or direction == "Z":
+        lo_label, hi_label = "zlo", "zhi"
+        index = 6
+    else:
+        print("??? Error! Not",direction,"direction! Please check your direction arg !")
+    terms = read_terms(lmp)
+    Header = read_data(lmp,"Header")
+    Atoms_info = read_data(lmp,"Atoms")
+    Atoms = str2array(Atoms_info)
+    ll = read_len(lmp,direction)
+    box = read_box(lmp)
+    lo = box[lo_label]
+    hi = box[hi_label]
+    m,n = Atoms.shape
+    for i in range(m):
+        Atoms[i][index] = float(Atoms[i][index])-distance
+        if float(Atoms[i][index]) <= lo:
+            Atoms[i][index] = float(Atoms[i][index])+ll
+        elif float(Atoms[i][index]) >= hi:
+            Atoms[i][index] = float(Atoms[i][index])-ll
+        Atoms[i][index] = str(Atoms[i][index])
+    Atoms_str = array2str(Atoms)
+    f = open(relmp,"w")
+    f.write(Header)
+    for term in terms:
+        term_info = read_data(lmp,term)
+        if "Atoms" in term:
+            term_info = Atoms_str
+        f.write(term)
+        f.write(term_info)
+    f.close()
+    print("\n>>> Moved boundary of lammps data successfully !\n")   
+    return
 
 
 if __name__ == '__main__':
