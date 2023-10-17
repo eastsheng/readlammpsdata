@@ -503,7 +503,11 @@ def find_match(all_idMass_dict,value, tolerance=0.01):
         if abs(float(value) - mass) < tolerance:
             return key
     return 'CT'
-def massDict(lmp):
+def read_mass(lmp):
+    """
+    read mass from lammps, return 2 dict: idMass_dict, idElem_dict
+    lmp: lammps data
+    """
     Masses = read_data(lmp,"Masses").strip().split("\n")
     # print(Masses)
     mass_id, mass, element= [],[],[]
@@ -530,7 +534,7 @@ def mass2element(lmp):
     for element in allelements:
         if element.symbol not in ["n"]:
             all_idMass_dict[element.symbol] = element.mass
-    idMass_dict, idElem_dict = massDict(lmp)
+    idMass_dict, idElem_dict = read_mass(lmp)
     elements_list = []
     for key, value in idMass_dict.items():
         ele = find_match(all_idMass_dict,value)
@@ -559,7 +563,7 @@ def lmp2xyz(lmp,xyzfile,elements=None):
         element = elements
     else:
         pass
-    idMass_dict, idElem_dict = massDict(lmp)
+    idMass_dict, idElem_dict = read_mass(lmp)
     Atoms = read_data(lmp,"Atoms").strip()
     Atoms = str2array(Atoms)
     type_id = Atoms[:,2]
@@ -1178,6 +1182,66 @@ def move_boundary(lmp,relmp,distance,direction="y"):
     f.close()
     print("\n>>> Moved boundary of lammps data successfully !\n")   
     return
+
+
+def density(lmp,atom_type,density_type="mass",direction="y",nbin=50):
+    """
+    calculating density from lammps data, return a array, x = array[:,0], density = array[:,1]
+    lmp: lammps data
+    atom_type: atomic types, a list, [1,2]
+    density_type: density type, default "mass" density, another is "number"
+    direction: direction, default direction = "y"
+    nbin: bin of number along the "y" direction
+    """
+    A2CM = 1e-8
+    amu2g = 6.02214076208112e23
+    convert_unit = amu2g*(A2CM)**3
+    lx = read_len(lmp,"x")
+    ly = read_len(lmp,"y")
+    lz = read_len(lmp,"z")
+    if direction=="x" or direction=="X":
+        ll = lx
+        index = 4
+        l_label = "xlo"
+    elif direction=="y" or direction=="Y":
+        ll = ly
+        index = 5
+        l_label = "ylo"
+    elif direction=="z" or direction=="Z":
+        ll = lz
+        index = 6
+        l_label = "zlo"
+
+    dbin = ll/nbin
+    lo = read_box(lmp)[l_label]
+    dv = lx*lz*dbin*convert_unit
+    Atoms = read_data(lmp,"Atoms")
+    Atoms = str2array(Atoms)
+    Masses = read_mass(lmp)[0]
+    m, n = Atoms.shape
+    laxis, rho = [], []
+    for i in range(nbin):
+        dm = 0
+        l0 = lo+i*dbin
+        l1 = lo+(i+1)*dbin
+        for j in range(m):
+            if int(Atoms[j][2]) in atom_type:
+                if float(Atoms[j][index]) >= l0 and float(Atoms[j][index]) <= l1:
+                    if density_type == "mass":
+                        dm += float(Masses[Atoms[j][2]])
+                    elif density_type == "number":
+                        dm += 1
+                    else:
+                        dm += 1
+        rhoi = dm/dv
+        li = (l0+l1)/2.0
+        laxis.append(li)
+        rho.append(rhoi)
+    laxis = np.array(laxis).reshape((-1,1))
+    rho = np.array(rho).reshape((-1,1))
+    rho_array = np.hstack((laxis,rho))
+    print("\n>>> Calculating density from lammps data successfully !\n")
+    return rho_array
 
 
 if __name__ == '__main__':
