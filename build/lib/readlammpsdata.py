@@ -1360,6 +1360,96 @@ def cut_lmp(lmp,relmp,distance,direction="y"):
     return
 
 
+def combine_lmp(lmp,add_lmp,new_lmp,move_xyz,type_dict):
+    """
+    combin two lammps data, default combine the first bond and angle (of add_lmp) and first type (of lmp),
+    other bonds and angles, add it in order
+    lmp: first lammps data
+    add_lmp: second lammps data
+    new_lmp: combined lammps data
+    move_xyz: move_xyz = [dx, dy, dz], for example, move = [0, 60, -13.5]
+    type_dict: type in add_lmp, cover, insert, or end the type in lmp
+        {"1":"cover","2":"cover","3":"insert","4":"insert","5":"insert"}
+    """
+    lmp_Atoms_str = read_data(lmp,"Atoms")
+    lmp_Atoms = str2array(lmp_Atoms_str)[:,:7]
+    add_lmp_Atoms = read_data(add_lmp,"Atoms")
+    add_lmp_Atoms = str2array(add_lmp_Atoms)[:,:7]
+    max_nid = max(lmp_Atoms[:,0].astype(int))
+    max_nmol = max(lmp_Atoms[:,1].astype(int))
+    m = len(add_lmp_Atoms)
+    origin_id,new_id = [],[]
+    for i in range(m):
+        origin_id.append(int(add_lmp_Atoms[i][0]))
+        add_lmp_Atoms[i][0] = str(max_nid+i+1)
+        new_id.append(int(add_lmp_Atoms[i][0]))
+        add_lmp_Atoms[i][1] = str(max_nmol+int(add_lmp_Atoms[i][1]))
+        add_lmp_Atoms[i][4] = str(float(add_lmp_Atoms[i][4])+move_xyz[0])
+        add_lmp_Atoms[i][5] = str(float(add_lmp_Atoms[i][5])+move_xyz[1])
+        add_lmp_Atoms[i][6] = str(float(add_lmp_Atoms[i][6])+move_xyz[2])
+    natoms = len(add_lmp_Atoms)+max_nid
+    new_Atoms = np.vstack((lmp_Atoms,add_lmp_Atoms))
+    new_Atoms = array2str(new_Atoms)
+    id_dict = dict(zip(origin_id,new_id))
+
+    lmp_Bonds_str = read_data(lmp,"Bonds")
+    lmp_Bonds = str2array(lmp_Bonds_str)
+    add_lmp_Bonds = read_data(add_lmp,"Bonds")
+    add_lmp_Bonds = str2array(add_lmp_Bonds).tolist()
+    n = len(add_lmp_Bonds)
+    max_nb = max(lmp_Bonds[:,0].astype(int))
+    for i in range(n):
+        add_lmp_Bonds[i][0] = str(max_nb+i+1)
+        add_lmp_Bonds[i][2] = np.str_(id_dict[int(add_lmp_Bonds[i][2])])
+        add_lmp_Bonds[i][3] = np.str_(id_dict[int(add_lmp_Bonds[i][3])])
+    nbonds = len(add_lmp_Bonds)+max_nb
+    add_lmp_Bonds = np.array(add_lmp_Bonds)
+    new_Bonds = np.vstack((lmp_Bonds,add_lmp_Bonds))
+    new_Bonds = array2str(new_Bonds)
+    
+    lmp_Angles_str = read_data(lmp,"Angles")
+    lmp_Angles = str2array(lmp_Angles_str)
+    add_lmp_Angles = read_data(add_lmp,"Angles")
+    add_lmp_Angles = str2array(add_lmp_Angles).tolist()
+    n = len(add_lmp_Angles)
+    max_na = max(lmp_Angles[:,0].astype(int))
+    for i in range(n):
+        add_lmp_Angles[i][0] = str(max_na+i+1)
+        add_lmp_Angles[i][2] = str(id_dict[int(add_lmp_Angles[i][2])])
+        add_lmp_Angles[i][3] = str(id_dict[int(add_lmp_Angles[i][3])])
+        add_lmp_Angles[i][4] = str(id_dict[int(add_lmp_Angles[i][4])])
+    nangles = len(add_lmp_Angles)+max_na
+    add_lmp_Angles = np.array(add_lmp_Angles)
+    new_Angles = np.vstack((lmp_Angles,add_lmp_Angles))
+    new_Angles = array2str(new_Angles)
+    
+    Header = read_data(lmp,"Header")
+    Header = modify_header(Header,"atoms",natoms)
+    Header = modify_header(Header,"bonds",nbonds)
+    Header = modify_header(Header,"angles",nangles)
+
+    f = open(new_lmp,"w")
+    f.write(Header)
+    terms = read_terms(lmp)
+    for term in terms:
+        term_info = read_data(lmp,term)
+        if "Atoms" in term:
+            term_info = new_Atoms
+        if "Bonds" in term:
+            term_info = new_Bonds
+        if "Angles" in term:
+            term_info = new_Angles
+        if "Velocities" in term:
+            pass
+        else:
+            f.write(term)
+            f.write(term_info)
+    f.close()
+    print("\n>>> Combine lammps data successfully !\n")   
+
+    return
+
+
 
 if __name__ == '__main__':
 
