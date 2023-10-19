@@ -1244,6 +1244,123 @@ def density(lmp,atom_type,density_type="mass",direction="y",nbin=50):
     return rho_array
 
 
+
+def cut_lmp(lmp,relmp,distance,direction="y"):
+    """
+    cut lammps data
+    lmp: original lammps data
+    relmp: rewrite lammps data
+    distance: cut distance, unit/A
+    direction: direction, default direction = "y"
+    """
+    if direction == "x" or direction == "X":
+        lo_label, hi_label = "xlo", "xhi"
+        index = 4
+    elif direction == "y" or direction == "Y":
+        lo_label, hi_label = "ylo", "yhi"
+        index = 5
+    elif direction == "z" or direction == "Z":
+        lo_label, hi_label = "zlo", "zhi"
+        index = 6
+    else:
+        print("??? Error! Not",direction,"direction! Please check your direction arg !")
+    terms = read_terms(lmp)
+    Header = read_data(lmp,"Header")
+    Atoms_info = read_data(lmp,"Atoms")
+    Atoms = str2array(Atoms_info)
+    ll = read_len(lmp,direction)
+    box = read_box(lmp)
+    lo = box[lo_label]
+    hi = box[hi_label]
+    m,n = Atoms.shape
+    cut_mol = []
+    for i in range(m):
+        if Atoms[i][2] not in ["3","4","5","6","7"]:
+            # Atoms[i][index] = float(Atoms[i][index])-distance
+            if float(Atoms[i][index]) >= distance:
+                cut_mol.append(Atoms[i][1])
+            # elif float(Atoms[i][index]) >= distance:
+            #     cut_mol.append(Atoms[i][1])
+
+    Atoms = Atoms.tolist()
+    Atoms_save = []
+    cut_id = []
+    for i in range(m):
+        if Atoms[i][1] not in cut_mol:
+            Atoms_save.append(Atoms[i])
+        else:
+            cut_id.append(Atoms[i][0])
+    Atoms_save = np.array(Atoms_save)   
+    natoms = len(Atoms_save)
+    saveid = Atoms_save[:,0].tolist()
+    for i in range(natoms):
+        Atoms_save[i,0] = str(i+1)
+    newsaveid = Atoms_save[:,0].tolist()
+    Atoms_str = array2str(Atoms_save)
+    
+    id_dict = dict(zip(saveid,newsaveid))
+
+    Bonds_info = read_data(lmp,"Bonds")
+    Bonds = str2array(Bonds_info)
+    p, q = Bonds.shape
+    Bonds = Bonds.tolist()
+    Bonds_cut = []
+    for i in range(p):
+        if Bonds[i][2] in cut_id or Bonds[i][2] in cut_id:
+            pass
+        else:
+            Bonds_cut.append(Bonds[i])
+    Bonds_cut = np.array(Bonds_cut)   
+    nbonds = len(Bonds_cut)
+    for i in range(nbonds):
+        Bonds_cut[i,0] = str(i+1)
+        Bonds_cut[i,2] = id_dict[Bonds_cut[i,2]]
+        Bonds_cut[i,3] = id_dict[Bonds_cut[i,3]]
+    Bonds_str = array2str(Bonds_cut)
+    
+    Angles_info = read_data(lmp,"Angles")
+    Angles = str2array(Angles_info)
+    r, s = Angles.shape
+    Angles = Angles.tolist()
+    Angles_cut = []
+    for i in range(r):
+        if Angles[i][2] in cut_id or Angles[i][2] in cut_id:
+            pass
+        else:
+            Angles_cut.append(Angles[i])
+    Angles_cut = np.array(Angles_cut)   
+    nangles = len(Angles_cut)
+    for i in range(nangles):
+        Angles_cut[i,0] = str(i+1)
+        Angles_cut[i,2] = id_dict[Angles_cut[i,2]]
+        Angles_cut[i,3] = id_dict[Angles_cut[i,3]]
+        Angles_cut[i,4] = id_dict[Angles_cut[i,4]]
+    Angles_str = array2str(Angles_cut)
+
+    f = open(relmp,"w")
+    Header = modify_header(Header,"atoms",natoms)
+    Header = modify_header(Header,"bonds",nbonds)
+    Header = modify_header(Header,"angles",nangles)
+    f.write(Header)
+    for term in terms:
+        term_info = read_data(lmp,term)
+        if "Atoms" in term:
+            term_info = Atoms_str
+        if "Bonds" in term:
+            term_info = Bonds_str
+        if "Angles" in term:
+            term_info = Angles_str
+        if "Velocities" in term:
+            pass
+        else:
+            f.write(term)
+            f.write(term_info)
+    f.close()
+    print("\n>>> Cut lammps data successfully !\n")   
+    return
+
+
+
 if __name__ == '__main__':
 
     print(__version__())
