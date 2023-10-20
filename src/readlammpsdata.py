@@ -1168,7 +1168,7 @@ def move_boundary(lmp,relmp,distance,direction="y"):
     terms = read_terms(lmp)
     Header = read_data(lmp,"Header")
     Atoms_info = read_data(lmp,"Atoms")
-    Atoms = str2array(Atoms_info)
+    Atoms = str2array(Atoms_info)[:,:7]
     ll = read_len(lmp,direction)
     box = read_box(lmp)
     lo = box[lo_label]
@@ -1180,7 +1180,9 @@ def move_boundary(lmp,relmp,distance,direction="y"):
             Atoms[i][index] = float(Atoms[i][index])+ll
         elif float(Atoms[i][index]) >= hi:
             Atoms[i][index] = float(Atoms[i][index])-ll
-        Atoms[i][index] = str(Atoms[i][index])
+
+        Atoms[i][index] = str(float(Atoms[i][index]))
+
     Atoms_str = array2str(Atoms)
     f = open(relmp,"w")
     f.write(Header)
