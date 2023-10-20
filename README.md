@@ -47,17 +47,15 @@ print(round(sum(charges),6))
 
 ### Fixes
 
-- 2023-10-19
-
+- 2023-10-20
+  - [x] Added  the `change_type_order` function
   - [x] Added the `combine_lmp` function
   - [x] Added the `cut_lmp` function
-
 - 2023-10-17
 
   - [x] Added the `move_boundary` function;
 
   - [x] Added the `density` function;
-
 - 2023-10-16
   - [x] Added the `modify_methane_hydrate` function;
   - [x] Added  the `modify_header` function;

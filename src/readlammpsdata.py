@@ -174,9 +174,16 @@ def read_atom_info(lmp,info="atoms"):
         "atoms","bonds","angles","dihedrals","impropers",
         "atom types","bond types","angle types","dihedral types","improper types"
     """
-    info_list = ["\n","atoms","bonds","angles","dihedrals","impropers",
-    "atom types","bond types","angle types","dihedral types","improper types","\n"]
-
+    info_list_all = ["atoms","bonds","angles","dihedrals","impropers",
+    "atom types","bond types","angle types","dihedral types","improper types"]
+    info_list = []
+    Header = read_data(lmp,"Header").strip().split("\n")
+    for i in range(len(Header)):
+        for j in range(len(info_list_all)):
+            if info_list_all[j] in Header[i]:
+                info_list.append(info_list_all[j])
+    info_list.insert(0,"\n")
+    info_list.append("\n")
     for i in range(len(info_list)):
         if info == info_list[i]:
             info0 = info_list[i-1]
@@ -992,14 +999,14 @@ def add_atoms(Atoms, add_atoms):
 
     return New_Atoms
 
-def modify_header(Header,hterm,number):
+def modify_header(Header,hterm,value):
     """
     modify the "Header" info, including number of "atoms", "bonds", "angles", "dihedrals", "impropers",
     "atom types", "bond types", "angle types", "dihedral types", "improper types",
     "xlo xhi", "ylo yhi", "zlo zhi".
     Header: Header
     hterm: "atoms", "bonds"
-    number: number of "atoms", "bonds"...
+    value: number of "atoms", "bonds"..., int; if "xlo xhi", value = [xlo, xhi]
     """
     Header = Header.strip().split("\n")
     for i in range(len(Header)):
@@ -1008,10 +1015,14 @@ def modify_header(Header,hterm,number):
             if hterm in Header[i]:
                 Header[i] = Header[i].split()
                 if len(Header[i]) == 2:
-                    Header[i][0] = str(number)
+                    Header[i][0] = str(value)
                     Header[i] = "  ".join(Header[i])
                 elif len(Header[i]) == 3:
-                    Header[i][0] = str(number)
+                    Header[i][0] = str(value)
+                    Header[i] = " ".join(Header[i])
+                elif len(Header[i]) == 4:
+                    Header[i][0] = str(value[0])
+                    Header[i][1] = str(value[1])
                     Header[i] = " ".join(Header[i])
     Header = "\n".join(Header)+"\n\n"
     print("\n>>>  modify the Header "+ hterm +" successfully !\n")
@@ -1368,9 +1379,16 @@ def combine_lmp(lmp,add_lmp,new_lmp,move_xyz,type_dict):
     add_lmp: second lammps data
     new_lmp: combined lammps data
     move_xyz: move_xyz = [dx, dy, dz], for example, move = [0, 60, -13.5]
-    type_dict: type in add_lmp, cover, insert, or end the type in lmp
-        {"1":"cover","2":"cover","3":"insert","4":"insert","5":"insert"}
+    type_dict: type in add_lmp, cover, or append the type in lmp
+        {"1":"cover","2":"cover","3":"append","4":"append"....,"5":"append"}
+        for example: type_dict = {"1":"cover","2":"cover", "3":"append", "4":"append"}
     """
+
+    add_natomtype = 0
+    for key, value in type_dict.items():
+        if value == "append":
+            add_natomtype += 1
+
     lmp_Atoms_str = read_data(lmp,"Atoms")
     lmp_Atoms = str2array(lmp_Atoms_str)[:,:7]
     add_lmp_Atoms = read_data(add_lmp,"Atoms")
@@ -1378,8 +1396,21 @@ def combine_lmp(lmp,add_lmp,new_lmp,move_xyz,type_dict):
     max_nid = max(lmp_Atoms[:,0].astype(int))
     max_nmol = max(lmp_Atoms[:,1].astype(int))
     m = len(add_lmp_Atoms)
+    natomtypes = read_atom_info(lmp,"atom types")
+    new_natomtypes = natomtypes+add_natomtype
+    diffence_natoms = new_natomtypes-natomtypes
     origin_id,new_id = [],[]
     for i in range(m):
+        try:
+            if type_dict[add_lmp_Atoms[i][2]]=="cover":
+                pass
+            elif type_dict[add_lmp_Atoms[i][2]]=="append":
+                add_lmp_Atoms[i][2] = str(natomtypes+int(add_lmp_Atoms[i][2])-diffence_natoms)
+            else:
+                pass
+        except:
+            print("??? Default cover atomic types!")
+
         origin_id.append(int(add_lmp_Atoms[i][0]))
         add_lmp_Atoms[i][0] = str(max_nid+i+1)
         new_id.append(int(add_lmp_Atoms[i][0]))
@@ -1427,19 +1458,35 @@ def combine_lmp(lmp,add_lmp,new_lmp,move_xyz,type_dict):
     Header = modify_header(Header,"atoms",natoms)
     Header = modify_header(Header,"bonds",nbonds)
     Header = modify_header(Header,"angles",nangles)
+    Header = modify_header(Header,"atom types",new_natomtypes)
+    lmp_ylo = read_box(lmp)["ylo"]
+    lmp_yhi = read_box(lmp)["yhi"]
+    add_lmp_ylen = read_len(add_lmp,"y")
+
+    Header = modify_header(Header,"ylo yhi",[lmp_ylo,lmp_yhi+add_lmp_ylen])
+
+    lmp_Masses = list(read_mass(lmp)[0].items())
+    add_lmp_Masses = list(read_mass(add_lmp)[0].items())
+    lmp_Masses = merge_masslists(lmp_Masses,add_lmp_Masses,natomtypes,diffence_natoms)
+    lmp_Masses = array2str(np.array(lmp_Masses))
 
     f = open(new_lmp,"w")
     f.write(Header)
     terms = read_terms(lmp)
     for term in terms:
         term_info = read_data(lmp,term)
+        if "Masses" in term:
+            term_info = lmp_Masses
         if "Atoms" in term:
             term_info = new_Atoms
         if "Bonds" in term:
             term_info = new_Bonds
         if "Angles" in term:
             term_info = new_Angles
-        if "Velocities" in term:
+        if "Velocities" in term or \
+           "Pair Coeffs" in term or \
+           "Bond Coeffs" in term or \
+           "Angle Coeffs" in term:
             pass
         else:
             f.write(term)
@@ -1447,6 +1494,73 @@ def combine_lmp(lmp,add_lmp,new_lmp,move_xyz,type_dict):
     f.close()
     print("\n>>> Combine lammps data successfully !\n")   
 
+    return
+
+def merge_masslists(list1, list2,natomtypes,diffence_natoms):
+    merged_list = list1
+    for item in list2:
+        if item not in list1:
+            item = list(item)
+            item[0] = str(int(item[0])+natomtypes-diffence_natoms)
+            merged_list.append(item)
+    return merged_list
+
+
+def change_type_order(lmp,relmp,atom_types=[8,9],updown=4):
+    """
+    change the order of atomic types
+    lmp: lammps data
+    relmp: rewrite lammps data
+    atom_types: atom types need to move/change, for example: atom_types=[8,9]
+    updown: move/change step, > 0 is up ,<0 is down, 
+            1 2 3 4 5 6 7 <-8 9; 1 2 3 <-8 9 4 5 6 7, updown = 4
+    """
+    Masses = list(read_mass(lmp)[0].items())
+    nmasses = len(Masses)
+    origin_all_types, new_all_types = [],[]
+    for i in range(nmasses):
+        origin_all_types.append(list(Masses[i])[0])
+        if int(Masses[i][0]) in atom_types:
+            Masses[i] = list(Masses[i])
+            Masses[i][0] = str(int(Masses[i][0])-updown)
+        else:
+            if int(Masses[i][0]) >= nmasses-updown-1:
+                Masses[i] = list(Masses[i])
+                Masses[i][0] = str(int(Masses[i][0])+len(atom_types))
+    Masses = np.array(Masses)
+    Masses =  Masses[np.argsort([int(x) for x in Masses[:, 0]])]
+    lmp_Masses = array2str(Masses)
+    move_term = origin_all_types[-len(atom_types):]
+    new_all_types = origin_all_types[:-len(atom_types) + updown+1] + move_term + \
+                    origin_all_types[-2 + updown+1:-len(atom_types)]
+    type_dict = dict(zip(new_all_types,origin_all_types))
+    # print(type_dict)
+
+    Atoms = str2array(read_data(lmp,"Atoms"))
+    m = len(Atoms)
+    for i in range(m):
+        Atoms[i][2] = type_dict[Atoms[i][2]]
+    new_Atoms = array2str(Atoms)
+    f = open(relmp,"w")
+    Header = read_data(lmp,"Header")
+    f.write(Header)
+    terms = read_terms(lmp)
+    for term in terms:
+        term_info = read_data(lmp,term)
+        if "Masses" in term:
+            term_info = lmp_Masses
+        if "Atoms" in term:
+            term_info = new_Atoms
+        if "Velocities" in term or \
+           "Pair Coeffs" in term or \
+           "Bond Coeffs" in term or \
+           "Angle Coeffs" in term:
+            pass
+        else:
+            f.write(term)
+            f.write(term_info)
+    f.close()
+    print("\n>>> Change the order of atomic types successfully !\n")   
     return
 
 
