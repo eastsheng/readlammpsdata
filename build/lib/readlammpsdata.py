@@ -476,7 +476,7 @@ def modify_pore_size(lammpsdata,modify_data,modify_size=0,pdbxyz=None):
             f.write("Impropers")
             f.write(Impropers)  
 
-    print("\n>>> Modified the pore size of lammpsdata successfully !\n")
+    print(">>> Modified the pore size of lammpsdata successfully !")
     return
 
 
@@ -502,7 +502,7 @@ def sort_lmp(lmp,rewrite_lmp):
                 f.write(data_term[i][j]+"\t")
             f.write("\n")
     f.close()
-    print("\n>>> Congratulations! the sorted lmp is successfully generated !\n")
+    print(">>> Congratulations! the sorted lmp is successfully generated !")
     return
 
 def find_match(all_idMass_dict,value, tolerance=0.01):
@@ -551,7 +551,7 @@ def mass2element(lmp):
     # print(elements_array)
     elements_list = " ".join(elements_list)
 
-    print("\n>>> Convert the masses obtained from lammps data to element symbols successfully !\n")
+    print(">>> Convert the masses obtained from lammps data to element symbols successfully !")
     return elements_list
 
 def lmp2xyz(lmp,xyzfile,elements=None):
@@ -596,7 +596,7 @@ def lmp2xyz(lmp,xyzfile,elements=None):
             for j in range(4):
                 f.write(xyz[i,j]+"\t")
             f.write("\n")
-    print("\n>>> Convert lammps data (lmp) file to xyz file successfully !\n")
+    print(">>> Convert lammps data (lmp) file to xyz file successfully !")
     return
 
 
@@ -738,7 +738,7 @@ def msi2clayff(lmp, clayff_lmp):
                 new_angles[i][0] = str(i+1)
                 f.write(new_angles[i][j]+"\t")
             f.write("\n")
-    print("\n>>> Convert a lmp obtained from msi2lmp to clayff force field successfully !\n")
+    print(">>> Convert a lmp obtained from msi2lmp to clayff force field successfully !")
     return
 
 
@@ -964,9 +964,9 @@ def lmp2tip4p(lmp,tip4p_lmp,ua=False):
                     f.write("\t"+str(count_nangle)+"\t"+str(2)+"\t"+str(int(sorted_Atoms[i][0])+3)+"\t"+sorted_Atoms[i][0]+"\t"+str(int(sorted_Atoms[i][0])+k+4)+"\n")
     f.close()
     if ua == True:
-        print("\n>>> Convert TIP4P/CH4 lmp successfully !\n")
+        print(">>> Convert TIP4P/CH4 lmp successfully !")
     else:
-        print("\n>>> Convert TIP4P/CT lmp successfully !\n")
+        print(">>> Convert TIP4P/CT lmp successfully !")
 
     return
 
@@ -981,7 +981,7 @@ def array2str(array):
     for row in array:
         string += "  ".join(row)+"\n"
     string = "\n\n"+string+"\n"
-    print("\n>>> Convert a array to a string for writing successfully !\n")
+    print(">>> Convert a array to a string for writing successfully !")
 
     return string
 
@@ -1025,7 +1025,7 @@ def modify_header(Header,hterm,value):
                     Header[i][1] = str(value[1])
                     Header[i] = " ".join(Header[i])
     Header = "\n".join(Header)+"\n\n"
-    print("\n>>>  modify the Header "+ hterm +" successfully !\n")
+    print(">>> modify the Header "+ hterm +" successfully !")
 
     return Header
 
@@ -1142,7 +1142,7 @@ def modify_methane_hydrate(lmp, relmp, axis="z",distance=1.1):
                 term_info = read_data(lmp,term)
             f.write(term)
             f.write(term_info)
-    print("\n>>>  Add methane molecules into half cages at the interface successfully !\n")
+    print(">>> Add methane molecules into half cages at the interface successfully !")
 
     return
 
@@ -1193,7 +1193,7 @@ def move_boundary(lmp,relmp,distance,direction="y"):
         f.write(term)
         f.write(term_info)
     f.close()
-    print("\n>>> Moved boundary of lammps data successfully !\n")   
+    print(">>> Moved boundary of lammps data successfully !")   
     return
 
 
@@ -1253,7 +1253,7 @@ def density(lmp,atom_type,density_type="mass",direction="y",nbin=50):
     laxis = np.array(laxis).reshape((-1,1))
     rho = np.array(rho).reshape((-1,1))
     rho_array = np.hstack((laxis,rho))
-    print("\n>>> Calculating density from lammps data successfully !\n")
+    print(">>> Calculating density from lammps data successfully !")
     return rho_array
 
 
@@ -1369,7 +1369,7 @@ def cut_lmp(lmp,relmp,distance,direction="y"):
             f.write(term)
             f.write(term_info)
     f.close()
-    print("\n>>> Cut lammps data successfully !\n")   
+    print(">>> Cut lammps data successfully !")   
     return
 
 
@@ -1420,6 +1420,7 @@ def combine_lmp(lmp,add_lmp,new_lmp,move_xyz,type_dict):
         add_lmp_Atoms[i][4] = str(float(add_lmp_Atoms[i][4])+move_xyz[0])
         add_lmp_Atoms[i][5] = str(float(add_lmp_Atoms[i][5])+move_xyz[1])
         add_lmp_Atoms[i][6] = str(float(add_lmp_Atoms[i][6])+move_xyz[2])
+
     natoms = len(add_lmp_Atoms)+max_nid
     new_Atoms = np.vstack((lmp_Atoms,add_lmp_Atoms))
     new_Atoms = array2str(new_Atoms)
@@ -1469,6 +1470,7 @@ def combine_lmp(lmp,add_lmp,new_lmp,move_xyz,type_dict):
 
     lmp_Masses = list(read_mass(lmp)[0].items())
     add_lmp_Masses = list(read_mass(add_lmp)[0].items())
+
     lmp_Masses = merge_masslists(lmp_Masses,add_lmp_Masses,natomtypes,diffence_natoms)
     lmp_Masses = array2str(np.array(lmp_Masses))
 
@@ -1494,7 +1496,7 @@ def combine_lmp(lmp,add_lmp,new_lmp,move_xyz,type_dict):
             f.write(term)
             f.write(term_info)
     f.close()
-    print("\n>>> Combine lammps data successfully !\n")   
+    print(">>> Combine lammps data successfully !")   
 
     return
 
@@ -1562,8 +1564,61 @@ def change_type_order(lmp,relmp,atom_types=[8,9],updown=4):
             f.write(term)
             f.write(term_info)
     f.close()
-    print("\n>>> Change the order of atomic types successfully !\n")   
+    print(">>> Change the order of atomic types successfully !")   
     return
+
+
+def exchange_position(lmp,relmp,id1,id2):
+    """
+    exchange the position id1 and id2
+    lmp: lammps data
+    relmp: rewrite lammps data
+    id1: the id of first particle, a int list, for example, [a1,b1]
+    id2: the id of second particle, a int list, for example, [a2,b2]. 
+    a1 and a2, b1 and b2 will exchange position
+    """
+    Atoms = read_data(lmp,"Atoms")
+    Atoms = str2array(Atoms)
+    m = len(Atoms)
+    n = len(id1)
+    for j in range(n):
+        for i in range(m):
+            if int(Atoms[i][0]) == id1[j]:
+                mol1 = Atoms[i][1]
+                x1,y1,z1 = Atoms[i][4],Atoms[i][5],Atoms[i][6]
+            elif int(Atoms[i][0]) == id2[j]:
+                mol2 = Atoms[i][1]
+                x2,y2,z2 = Atoms[i][4],Atoms[i][5],Atoms[i][6]
+        dx = float(x1)-float(x2)
+        dy = float(y1)-float(y2)
+        dz = float(z1)-float(z2)
+        for i in range(m):
+            if Atoms[i][1] == mol1:
+                Atoms[i][4] = str(float(Atoms[i][4]) - dx)
+                Atoms[i][5] = str(float(Atoms[i][5]) - dy)
+                Atoms[i][6] = str(float(Atoms[i][6]) - dz)
+            elif Atoms[i][1] == mol2:
+                Atoms[i][4] = str(float(Atoms[i][4]) + dx)
+                Atoms[i][5] = str(float(Atoms[i][5]) + dy)
+                Atoms[i][6] = str(float(Atoms[i][6]) + dz)
+
+    new_Atoms = array2str(Atoms)
+
+    f = open(relmp,"w")
+    Header = read_data(lmp,"Header")
+    f.write(Header)
+    terms = read_terms(lmp)
+    for term in terms:
+        term_info = read_data(lmp,term)
+        if "Atoms" in term:
+            term_info = new_Atoms
+
+        f.write(term)
+        f.write(term_info)
+    f.close()
+    print(">>> Change the order of atomic types successfully !")   
+    return
+
 
 
 

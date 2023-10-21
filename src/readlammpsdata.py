@@ -1568,6 +1568,59 @@ def change_type_order(lmp,relmp,atom_types=[8,9],updown=4):
     return
 
 
+def exchange_position(lmp,relmp,id1,id2):
+    """
+    exchange the position id1 and id2
+    lmp: lammps data
+    relmp: rewrite lammps data
+    id1: the id of first particle, a int list, for example, [a1,b1]
+    id2: the id of second particle, a int list, for example, [a2,b2]. 
+    a1 and a2, b1 and b2 will exchange position
+    """
+    Atoms = read_data(lmp,"Atoms")
+    Atoms = str2array(Atoms)
+    m = len(Atoms)
+    n = len(id1)
+    for j in range(n):
+        for i in range(m):
+            if int(Atoms[i][0]) == id1[j]:
+                mol1 = Atoms[i][1]
+                x1,y1,z1 = Atoms[i][4],Atoms[i][5],Atoms[i][6]
+            elif int(Atoms[i][0]) == id2[j]:
+                mol2 = Atoms[i][1]
+                x2,y2,z2 = Atoms[i][4],Atoms[i][5],Atoms[i][6]
+        dx = float(x1)-float(x2)
+        dy = float(y1)-float(y2)
+        dz = float(z1)-float(z2)
+        for i in range(m):
+            if Atoms[i][1] == mol1:
+                Atoms[i][4] = str(float(Atoms[i][4]) - dx)
+                Atoms[i][5] = str(float(Atoms[i][5]) - dy)
+                Atoms[i][6] = str(float(Atoms[i][6]) - dz)
+            elif Atoms[i][1] == mol2:
+                Atoms[i][4] = str(float(Atoms[i][4]) + dx)
+                Atoms[i][5] = str(float(Atoms[i][5]) + dy)
+                Atoms[i][6] = str(float(Atoms[i][6]) + dz)
+
+    new_Atoms = array2str(Atoms)
+
+    f = open(relmp,"w")
+    Header = read_data(lmp,"Header")
+    f.write(Header)
+    terms = read_terms(lmp)
+    for term in terms:
+        term_info = read_data(lmp,term)
+        if "Atoms" in term:
+            term_info = new_Atoms
+
+        f.write(term)
+        f.write(term_info)
+    f.close()
+    print(">>> Change the order of atomic types successfully !")   
+    return
+
+
+
 
 if __name__ == '__main__':
 
