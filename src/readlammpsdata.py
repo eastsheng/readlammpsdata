@@ -2,6 +2,7 @@
 import numpy as np
 from collections import Counter
 import periodictable as pt
+import time
 
 def __version__():
     """
@@ -9,6 +10,17 @@ def __version__():
     """
     version = "1.0.7"
     return version
+
+def print_line(func):
+    
+    def wrapper(*args, **kwargs):
+        print(21*"-"," Program Start ",21*"-")
+        start_time = time.time()
+        func(*args, **kwargs)
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        print(20*"-","Run time:",round(elapsed_time,2),"s ",20*"-")
+    return wrapper
 
 def extract_substring(string, char1, char2):
     """
@@ -154,7 +166,7 @@ def read_box(lmp):
     x = list(map(lambda f:float(f), x))
     y = list(map(lambda f:float(f), y))
     z = list(map(lambda f:float(f), z))
-    xyz = {
+    box = {
         "xlo":x[0],
         "xhi":x[1],
         "ylo":y[0],
@@ -162,7 +174,7 @@ def read_box(lmp):
         "zlo":z[0],
         "zhi":z[1],
     }
-    return xyz
+    return box
 
 
 
@@ -193,6 +205,7 @@ def read_atom_info(lmp,info="atoms"):
     Natoms = list(map(lambda f:int(f), Natoms))[-1]
     return Natoms
 
+@print_line
 def read_charges(lmp):
     """
     read charges info from lammps data:
@@ -212,6 +225,7 @@ def read_charges(lmp):
 
     return charges
 
+@print_line
 def read_len(lmp,direction):
     """
     read length of box:
@@ -232,7 +246,7 @@ def read_len(lmp,direction):
     print(">>> Read size of",direction, "direction successfully !")
     return ll
 
-
+@print_line
 def read_vol(lmp):
     """
     read volume of box:
@@ -248,7 +262,7 @@ def read_vol(lmp):
     print(">>> Read volume of system successfully !")
     return vlo
 
-
+@print_line
 def read_xyz(xyzfile,term="all"):
     """
     read xyz info from xyzfile
@@ -269,6 +283,7 @@ def read_xyz(xyzfile,term="all"):
     else:
         return elements, xyz
 
+@print_line
 def read_pdb(pdbfile,term="all"):
     """
     read pdf from pdbfile
@@ -317,7 +332,7 @@ def read_pdb(pdbfile,term="all"):
     else:
         return elements, xyz, conect
 
-
+@print_line
 def pdb2xyz(pdbfile,xyzfile):
     """
     convert pdb file to xyz file
@@ -334,7 +349,7 @@ def pdb2xyz(pdbfile,xyzfile):
             f.write(elements[i]+"\t"+str(xyz[i][0])+"\t"+str(xyz[i][1])+"\t"+str(xyz[i][2])+"\n")
     print(">>> pdb2xyz successfully!")
 
-
+@print_line
 def read_formula(file):
     """
     read molecular formula from xyzfile or pdb file
@@ -358,7 +373,7 @@ def read_formula(file):
     print(">>> Read formula from xyzfile or pdb file successfully !")
     return chemical_formula
 
-
+@print_line
 def modify_pos(lmp,pdbxyz):
     """
     modify lammps data position by xyz or pdb file
@@ -381,6 +396,7 @@ def modify_pos(lmp,pdbxyz):
     print(">>> Modified lammps data position by xyz or pdb file successfully !")
     return Atoms
 
+@print_line
 def modify_pore_size(lammpsdata,modify_data,modify_size=0,pdbxyz=None):
     """
     modify the pore size of lammpsdata
@@ -479,7 +495,7 @@ def modify_pore_size(lammpsdata,modify_data,modify_size=0,pdbxyz=None):
     print(">>> Modified the pore size of lammpsdata successfully !")
     return
 
-
+@print_line
 def sort_lmp(lmp,rewrite_lmp):
     """
     Sort all the contents of lmp by the first column id
@@ -510,6 +526,8 @@ def find_match(all_idMass_dict,value, tolerance=0.01):
         if abs(float(value) - mass) < tolerance:
             return key
     return 'CT'
+
+
 def read_mass(lmp):
     """
     read mass from lammps, return 2 dict: idMass_dict, idElem_dict
@@ -522,54 +540,52 @@ def read_mass(lmp):
         m = m.split()
         mass_id.append(m[0])
         mass.append(m[1])
-        try:
-            element.append(m[3])
-        except:
-            pass
+        # try:
+        #     element.append(m[3])
+        # except:
+        #     pass
     idMass_dict = dict(zip(mass_id,mass))
+    element = mass2element_list(idMass_dict)
     idElem_dict = dict(zip(mass_id,element))
-
+    print(">>> Read the id masses and element dicts successfully !")
     return idMass_dict, idElem_dict
 
-def mass2element(lmp):
-    """
-    Convert the masses obtained from lammps data to element symbols
-    lmp: lammps data
-    """
+
+def mass2element_list(idMass_dict):
     allelements = pt.elements
     all_idMass_dict = {}
     for element in allelements:
         if element.symbol not in ["n"]:
             all_idMass_dict[element.symbol] = element.mass
-    idMass_dict, idElem_dict = read_mass(lmp)
     elements_list = []
     for key, value in idMass_dict.items():
         ele = find_match(all_idMass_dict,value)
         elements_list.append(ele)
-    # print(len(elements_list))
-    # elements_array = np.array(elements_list).reshape((-1,1))
-    # print(elements_array)
-    elements_list = " ".join(elements_list)
-
-    print(">>> Convert the masses obtained from lammps data to element symbols successfully !")
+    print(">>> Convert the id masses to element list successfully !")
     return elements_list
 
-def lmp2xyz(lmp,xyzfile,elements=None):
+
+def mass2element_symbol(lmp):
+    """
+    Convert the masses obtained from lammps data to element symbols
+    lmp: lammps data
+    """
+    idMass_dict, idElem_dict = read_mass(lmp)
+
+    elements_list = mass2element_list(idMass_dict)
+    elements_symbols = " ".join(elements_list)
+
+    print(">>> Convert the masses obtained from lammps data to element symbols successfully !")
+    return elements_symbols
+
+
+@print_line
+def lmp2xyz(lmp,xyzfile):
     """
     convert lammps data (lmp) file to xyz file
     lmp: lammps data file
     xyzfile: xyz file
-    elements: A list of elements by atomic type in order, there are three methods:
-            elements = None: Identified by relative atomic mass
-            elements = [A list of elements]: you can specify it manually
-            elements = other, such as 1, 2, 3, or lmp... : read from the 'Masses' comment of the lmp file
     """
-    if elements == None:
-        element = mass2element(lmp)
-    elif isinstance(elements,list):
-        element = elements
-    else:
-        pass
     idMass_dict, idElem_dict = read_mass(lmp)
     Atoms = read_data(lmp,"Atoms").strip()
     Atoms = str2array(Atoms)
@@ -586,17 +602,53 @@ def lmp2xyz(lmp,xyzfile,elements=None):
 
     with open(xyzfile,"w") as f:
         f.write(str(numOfAtoms)+"\n")
-        if elements == None:
-            f.write("Generated by lmp2xyz in 'readlammpsdata' package, Identified by relative atomic mass\n")
-        elif isinstance(elements,list):
-            f.write("Generated by lmp2xyz in 'readlammpsdata' package, [A list of elements]: you specify it manually\n")
-        else:
-            f.write("Generated by lmp2xyz in 'readlammpsdata' package, read from the 'Masses' comment of the lmp file\n")
+        f.write("Generated by lmp2xyz in 'readlammpsdata' package, Identified by relative atomic mass\n")
         for i in range(numOfAtoms):
             for j in range(4):
                 f.write(xyz[i,j]+"\t")
             f.write("\n")
     print(">>> Convert lammps data (lmp) file to xyz file successfully !")
+    return
+
+
+@print_line
+def lmp2lammpstrj(lmp,lammpstrj):
+    """
+    convert lammps data (lmp) file to xyz file
+    lmp: lammps data file
+    lammpstrj: lammpstrj file
+    """
+    idMass_dict, idElem_dict = read_mass(lmp)
+    Atoms = read_data(lmp,"Atoms").strip()
+    Atoms = str2array(Atoms)
+    atom_id = Atoms[:,0]
+    mol_id = Atoms[:,1]
+    type_id = Atoms[:,2]
+
+    elements_list = []
+    numOfAtoms = len(type_id)
+    for i in range(numOfAtoms):
+        elements_list.append(idElem_dict[type_id[i]])
+    elements_array = np.array(elements_list).reshape((-1,1))
+    pos = Atoms[:,4:7]
+    xyz = np.hstack((atom_id.reshape(-1,1),mol_id.reshape(-1,1),elements_array,type_id.reshape(-1,1),pos))
+    m,n = xyz.shape
+    box = read_box(lmp)
+    with open(lammpstrj,"w") as f:
+        f.write("ITEM: TIMESTEP\n")
+        f.write("0\n")
+        f.write("ITEM: NUMBER OF ATOMS\n")
+        f.write(str(numOfAtoms)+"\n")
+        f.write("ITEM: BOX BOUNDS pp pp pp\n")
+        f.write(str(box['xlo'])+'\t'+str(box['xhi'])+"\n")
+        f.write(str(box['ylo'])+'\t'+str(box['yhi'])+"\n")
+        f.write(str(box['zlo'])+'\t'+str(box['zhi'])+"\n")
+        f.write("ITEM: ATOMS id mol element type x y z \n")
+        for i in range(m):
+            for j in range(n):
+                f.write(xyz[i,j]+"\t")
+            f.write("\n")
+    print(">>> Convert lammps data (lmp) file to lammpstrj file successfully !")
     return
 
 
@@ -623,6 +675,7 @@ def select_term_info(XCoeffs,term,):
                 # print(term[i])
     return new_terms
 
+@print_line
 def msi2clayff(lmp, clayff_lmp):
     """
     # J. Phys. Chem. B, Vol. 108, No. 4, 2004 1259
@@ -742,7 +795,7 @@ def msi2clayff(lmp, clayff_lmp):
     return
 
 
-
+@print_line
 def sort_tip4p_ele(dictionary,index,ele='O'):
     """
     If the value of the first element in the dictionary is not 'O', 
@@ -775,6 +828,7 @@ def sort_tip4p_ele(dictionary,index,ele='O'):
 
     return new_dictionary
 
+@print_line
 def lmp2tip4p(lmp,tip4p_lmp,ua=False):
     """
     lmp to tip4p format, O-H-H
@@ -815,7 +869,7 @@ def lmp2tip4p(lmp,tip4p_lmp,ua=False):
     else:
         f.write(Header)
     # 1. ------> modify masses
-    elements = mass2element(lmp).split()
+    elements = mass2element_symbol(lmp).split()
     elements = {i: value for i, value in enumerate(elements,1)}
     old_keys = list(elements)
     elements = sort_tip4p_ele(elements,index=1,ele='O')
@@ -971,7 +1025,6 @@ def lmp2tip4p(lmp,tip4p_lmp,ua=False):
     return
 
 
-
 def array2str(array):
     """
     convert a array to string format for writing directly. 
@@ -1029,6 +1082,7 @@ def modify_header(Header,hterm,value):
 
     return Header
 
+@print_line
 def modify_methane_hydrate(lmp, relmp, axis="z",distance=1.1):
     """
     add methane molecules into half cages at the interface for its symmetry in pore, ppp to ppf
@@ -1146,6 +1200,7 @@ def modify_methane_hydrate(lmp, relmp, axis="z",distance=1.1):
 
     return
 
+@print_line
 def move_boundary(lmp,relmp,distance,direction="y"):
     """
     move boundary of lammps data
@@ -1196,7 +1251,7 @@ def move_boundary(lmp,relmp,distance,direction="y"):
     print(">>> Moved boundary of lammps data successfully !")   
     return
 
-
+@print_line
 def density(lmp,atom_type,density_type="mass",direction="y",nbin=50):
     """
     calculating density from lammps data, return a array, x = array[:,0], density = array[:,1]
@@ -1257,7 +1312,7 @@ def density(lmp,atom_type,density_type="mass",direction="y",nbin=50):
     return rho_array
 
 
-
+@print_line
 def cut_lmp(lmp,relmp,distance,direction="y"):
     """
     cut lammps data
@@ -1372,7 +1427,7 @@ def cut_lmp(lmp,relmp,distance,direction="y"):
     print(">>> Cut lammps data successfully !")   
     return
 
-
+@print_line
 def combine_lmp(lmp,add_lmp,new_lmp,move_xyz,type_dict):
     """
     combin two lammps data, default combine the first bond and angle (of add_lmp) and first type (of lmp),
@@ -1567,7 +1622,7 @@ def change_type_order(lmp,relmp,atom_types=[8,9],updown=4):
     print(">>> Change the order of atomic types successfully !")   
     return
 
-
+@print_line
 def exchange_position(lmp,relmp,id1,id2):
     """
     exchange the position id1 and id2
