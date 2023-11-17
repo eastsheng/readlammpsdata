@@ -12,7 +12,7 @@ Requires-Dist: periodictable>=1.6.1
 
 # readlammpsdata
 
-A script for reading LAMMPS data
+A script for reading and modifying LAMMPS data
 
 
 

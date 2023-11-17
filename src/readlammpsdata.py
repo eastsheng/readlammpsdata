@@ -11,6 +11,14 @@ def __version__():
     version = "1.0.7"
     return version
 
+def print_version():
+    version = __version__()
+    print(50*"-")
+    print("@readlammpsdata-"+version)
+    print(">>> A script for reading and modifying LAMMPS data!")
+    print(50*"-")
+    return
+
 def print_line(func):
     
     def wrapper(*args, **kwargs):
@@ -1679,7 +1687,8 @@ def exchange_position(lmp,relmp,id1,id2):
 
 if __name__ == '__main__':
 
-    print(__version__())
+    # print(__version__())
+    print_version()
     # msi2clayff("sio2_1nm.data","sio2_1nm_clayff.data")
 
     

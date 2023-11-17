@@ -1,6 +1,6 @@
 # readlammpsdata
 
-A script for reading LAMMPS data
+A script for reading and modifying LAMMPS data
 
 
 
