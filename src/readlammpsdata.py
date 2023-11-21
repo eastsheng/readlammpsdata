@@ -669,7 +669,7 @@ def replace_term_info(term,a_dict):
     # term = [x for x in term if x not in [""]]
     return new_term
 
-def select_term_info(XCoeffs,term,):
+def select_term_info(XCoeffs,term):
     m, n = term.shape
     new_terms = []
     for i in range(m):
@@ -678,6 +678,12 @@ def select_term_info(XCoeffs,term,):
                 new_terms.append(term[i].tolist())
                 # print(term[i])
     return new_terms
+
+def replace_charges(Atoms,charges_dict,atoms_id_dict):
+    for i in range(len(Atoms)):
+        Atoms[i,3] = charges_dict[atoms_id_dict[Atoms[i,2]]]
+    return Atoms
+
 
 @print_line
 def msi2clayff(lmp, clayff_lmp):
@@ -692,7 +698,6 @@ def msi2clayff(lmp, clayff_lmp):
     Masses = read_data(lmp,"Masses").split("\n")
     mass_dict = {"sz":"28.085500","oz":"15.999400","oh":"15.999400","ho":"1.007970"}
     Masses = replace_term_info(Masses,mass_dict)
-    
     PairCoeffs = read_data(lmp,"Pair Coeffs").split("\n")
     pair_dict = {"sz":"0.00000184050       3.3020000000",
                  "oz":"0.15540000000       3.1655700000",
@@ -711,8 +716,17 @@ def msi2clayff(lmp, clayff_lmp):
     angle_type_number = len(AngleCoeffs)
 
     Atoms = read_data(lmp,"Atoms")
-    # print(Atoms)
-
+    Atoms = str2array(Atoms)
+    charges_dict = {"sz":"2.100000","oz":"-1.050000","oh":"-0.950000","ho":"0.425000"}
+    atoms_id_dict = {}
+    for item in Masses:
+        words = item.split()
+        key = words[0]
+        value = words[-1]
+        atoms_id_dict[key] = value
+    Atoms = replace_charges(Atoms,charges_dict,atoms_id_dict)
+    Atoms = array2str(Atoms)
+    
     Bonds = read_data(lmp,"Bonds")
     Bonds = str2array(Bonds)
     new_bonds = select_term_info(BondCoeffs,Bonds)
@@ -833,7 +847,16 @@ def msi2clayff_OH(lmp, clayff_lmp):
     angle_type_number = len(AngleCoeffs)
 
     Atoms = read_data(lmp,"Atoms")
-    # print(Atoms)
+    Atoms = str2array(Atoms)
+    charges_dict = {"sz":"2.100000","oz":"-1.050000","oh":"-0.950000","ho":"0.425000"}
+    atoms_id_dict = {}
+    for item in Masses:
+        words = item.split()
+        key = words[0]
+        value = words[-1]
+        atoms_id_dict[key] = value
+    Atoms = replace_charges(Atoms,charges_dict,atoms_id_dict)
+    Atoms = array2str(Atoms)
 
     Bonds = read_data(lmp,"Bonds")
     Bonds = str2array(Bonds)
