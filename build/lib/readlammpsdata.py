@@ -1804,6 +1804,55 @@ def exchange_position(lmp,relmp,id1,id2):
     print(">>> Change the order of atomic types successfully !")   
     return
 
+@print_line
+def change_lmp_axis(lmp,relmp,axis_list=["y","z","x"]):
+    """
+    change axis of lmp full
+    Parameters:
+    - lmp: lammps data
+    - relmp: rewrite lammps data
+    - axis_list: a list including new order of axis, like ["y","z","x"]
+    """
+    axis_dict = {"x":4,"y":5,"z":6}
+    Atoms = read_data(lmp,"Atoms")
+    Atoms = str2array(Atoms)
+    Atoms[:, [axis_dict["x"],axis_dict["y"],axis_dict["z"]]] = \
+    Atoms[:, [axis_dict[axis_list[0]],axis_dict[axis_list[1]],axis_dict[axis_list[2]]]]
+
+    Header = read_data(lmp,"Header")
+    box = read_box(lmp)
+    axis_dict = {"x":["xlo","xhi"],"y":["ylo","yhi"],"z":["zlo","zhi"]}
+    new_axis_dict = {axis_list[i]: axis_dict[axis_list[i]] for i in range(len(axis_list))}
+    new_keys = ['x', 'y', 'z']
+    modified_dict = {new_keys[i]: new_axis_dict[old_key] for i, old_key in enumerate(new_axis_dict)}
+
+    new_xlo = box[modified_dict["x"][0]]
+    new_xhi = box[modified_dict["x"][1]]
+    new_ylo = box[modified_dict["y"][0]]
+    new_yhi = box[modified_dict["y"][1]]
+    new_zlo = box[modified_dict["z"][0]]
+    new_zhi = box[modified_dict["z"][1]]
+
+    Header = modify_header(Header,"xlo xhi",[new_xlo,new_xhi])
+    Header = modify_header(Header,"ylo yhi",[new_ylo,new_yhi])
+    Header = modify_header(Header,"zlo zhi",[new_zlo,new_zhi])
+    
+    new_Atoms = array2str(Atoms)
+
+    f = open(relmp,"w")
+    f.write(Header)
+    terms = read_terms(lmp)
+    for term in terms:
+        term_info = read_data(lmp,term)
+        if "Atoms" in term:
+            term_info = new_Atoms
+
+        f.write(term)
+        f.write(term_info)
+    f.close()
+
+    print(">>> Change axis to ("+" ".join(axis_list)+") successfully !")
+    return
 
 
 
