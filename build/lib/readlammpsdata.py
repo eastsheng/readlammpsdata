@@ -233,7 +233,6 @@ def read_charges(lmp):
 
     return charges
 
-@print_line
 def read_len(lmp,direction):
     """
     read length of box:
@@ -254,16 +253,15 @@ def read_len(lmp,direction):
     print(">>> Read size of",direction, "direction successfully !")
     return ll
 
-@print_line
 def read_vol(lmp):
     """
     read volume of box:
     lmp: lammps data file
     return unit of volume: nm^3
     """
-    Lx = read_len(lmp,direc="x")
-    Ly = read_len(lmp,direc="y")
-    Lz = read_len(lmp,direc="z")
+    Lx = read_len(lmp,direction="x")
+    Ly = read_len(lmp,direction="y")
+    Lz = read_len(lmp,direction="z")
 
     vlo = Lx*Ly*Lz*1e-3
 
@@ -357,7 +355,6 @@ def pdb2xyz(pdbfile,xyzfile):
             f.write(elements[i]+"\t"+str(xyz[i][0])+"\t"+str(xyz[i][1])+"\t"+str(xyz[i][2])+"\n")
     print(">>> pdb2xyz successfully!")
 
-@print_line
 def read_formula(file):
     """
     read molecular formula from xyzfile or pdb file
@@ -381,7 +378,6 @@ def read_formula(file):
     print(">>> Read formula from xyzfile or pdb file successfully !")
     return chemical_formula
 
-@print_line
 def modify_pos(lmp,pdbxyz):
     """
     modify lammps data position by xyz or pdb file
@@ -1854,7 +1850,49 @@ def change_lmp_axis(lmp,relmp,axis_list=["y","z","x"]):
     print(">>> Change axis to ("+" ".join(axis_list)+") successfully !")
     return
 
+@print_line
+def coord2zero(lmp,relmp):
+    """
+    Coordinate starting point to zero
+    Parameters:
+    - lmp: lammps data
+    - relmp: rewrite lammps data
+    """
+    Header = read_data(lmp,"Header")
+    box = read_box(lmp)
+    xlo = float(box["xlo"])
+    ylo = float(box["ylo"])
+    zlo = float(box["zlo"])
+    Atoms = read_data(lmp,"Atoms")
+    Atoms = str2array(Atoms)
+    xyz = Atoms[:,[4,5,6]].astype(float)
+    xyz[:,0] -= xlo
+    xyz[:,1] -= ylo
+    xyz[:,2] -= zlo
+    Atoms[:,[4,5,6]] = xyz
+    Lx = round(read_len(lmp,"x"),6)
+    Ly = round(read_len(lmp,"y"),6)
+    Lz = round(read_len(lmp,"z"),6)
+    Header = modify_header(Header,"xlo xhi",[0,Lx])
+    Header = modify_header(Header,"ylo yhi",[0,Ly])
+    Header = modify_header(Header,"zlo zhi",[0,Lz])
+    
+    new_Atoms = array2str(Atoms)
 
+    f = open(relmp,"w")
+    f.write(Header)
+    terms = read_terms(lmp)
+    for term in terms:
+        term_info = read_data(lmp,term)
+        if "Atoms" in term:
+            term_info = new_Atoms
+
+        f.write(term)
+        f.write(term_info)
+    f.close()
+
+    print(">>> Coordinate starting point to zero successfully !")
+    return
 
 if __name__ == '__main__':
 
