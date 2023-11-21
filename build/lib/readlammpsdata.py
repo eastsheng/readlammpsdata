@@ -220,8 +220,13 @@ def read_charges(lmp):
     lmp: lammps data file
     return charges of all atoms
     """
+    terms = read_terms(lmp)
+    data_sub_str = "Atoms"
+    for term in terms:
+        if "Atoms" in term:
+            data_sub_str = term
     # try:
-    Atoms = read_data(lmp, data_sub_str = "Atoms")
+    Atoms = read_data(lmp, data_sub_str)
     Atoms = str2array(Atoms)
     # except:
     #     Atoms = read_data(lmp, data_sub_str = "Atoms # full")
@@ -230,7 +235,7 @@ def read_charges(lmp):
     charges = np.float64(np.array(Atoms[:,3]))
 
     # charges = list(map(lambda f:float(f), Atoms[:,3]))
-
+    print(">>> Read charges successfully !")
     return charges
 
 def read_len(lmp,direction):

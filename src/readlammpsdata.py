@@ -213,24 +213,21 @@ def read_atom_info(lmp,info="atoms"):
     Natoms = list(map(lambda f:int(f), Natoms))[-1]
     return Natoms
 
-@print_line
 def read_charges(lmp):
     """
     read charges info from lammps data:
     lmp: lammps data file
     return charges of all atoms
     """
-    # try:
-    Atoms = read_data(lmp, data_sub_str = "Atoms")
+    terms = read_terms(lmp)
+    data_sub_str = "Atoms"
+    for term in terms:
+        if "Atoms" in term:
+            Atoms_term = term
+    Atoms = read_data(lmp, data_sub_str=Atoms_term)
     Atoms = str2array(Atoms)
-    # except:
-    #     Atoms = read_data(lmp, data_sub_str = "Atoms # full")
-    #     Atoms = str2array(Atoms)
-
     charges = np.float64(np.array(Atoms[:,3]))
-
-    # charges = list(map(lambda f:float(f), Atoms[:,3]))
-
+    print(">>> Read charges successfully !")
     return charges
 
 def read_len(lmp,direction):
