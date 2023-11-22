@@ -1461,7 +1461,7 @@ def density(lmp,atom_type,density_type="mass",direction="y",nbin=50):
 @print_line
 def cut_lmp(lmp,relmp,distance,direction="y"):
     """
-    cut lammps data
+    cut lammps data of hydrate
     lmp: original lammps data
     relmp: rewrite lammps data
     distance: cut distance, unit/A
@@ -1572,6 +1572,64 @@ def cut_lmp(lmp,relmp,distance,direction="y"):
     f.close()
     print(">>> Cut lammps data successfully !")   
     return
+
+@print_line
+def cut_lmp_atoms(lmp,relmp,distance,direction="y"):
+    """
+    cut lammps data
+    lmp: original lammps data
+    relmp: rewrite lammps data
+    distance: cut distance, unit/A
+    direction: direction, default direction = "y"
+    """
+    if direction == "x" or direction == "X":
+        lo_label, hi_label = "xlo", "xhi"
+        index = 4
+    elif direction == "y" or direction == "Y":
+        lo_label, hi_label = "ylo", "yhi"
+        index = 5
+    elif direction == "z" or direction == "Z":
+        lo_label, hi_label = "zlo", "zhi"
+        index = 6
+    else:
+        print("??? Error! Not",direction,"direction! Please check your direction arg !")
+    terms = read_terms(lmp)
+    Header = read_data(lmp,"Header")
+    Atoms = str2array(read_data(lmp,"Atoms"))
+
+    box = read_box(lmp)
+    lo = box[lo_label]
+    hi = box[hi_label]
+    m,n = Atoms.shape
+    Atoms = Atoms.tolist()
+    Atoms_save = []
+    cut_id = []
+    for i in range(m):
+        if float(Atoms[i][index]) <= distance:
+            Atoms_save.append(Atoms[i])
+
+    # print(Atoms_save)
+    Atoms_save = np.array(Atoms_save)
+    natoms = len(Atoms_save)
+    for i in range(natoms):
+        Atoms_save[i,0] = str(i+1)
+    Atoms = array2str(Atoms_save)
+
+    f = open(relmp,"w")
+    Header = modify_header(Header,"atoms",natoms)
+    f.write(Header)
+    for term in terms:
+        term_info = read_data(lmp,term)
+        if "Atoms" in term:
+            f.write(term)
+            f.write(Atoms)
+        else:
+            f.write(term)
+            f.write(term_info)
+    f.close()
+    print(">>> Cut lammps data successfully !")   
+    return
+
 
 @print_line
 def combine_lmp(lmp,add_lmp,new_lmp,move_xyz,type_dict):
@@ -1913,6 +1971,159 @@ def coord2zero(lmp,relmp):
 
     print(">>> Coordinate starting point to zero successfully !")
     return
+
+
+def find_closest_index(Atoms_Si,Atoms_Oh):
+    closest_indices = []
+    for row1 in Atoms_Si:
+        coords1 = row1[4:7].astype(float)
+        distances = np.linalg.norm(Atoms_Oh[:, 4:7].astype(float) - coords1, axis=1)
+        closest_index = np.argmin(distances)
+        closest_indices.append([row1[0], Atoms_Oh[closest_index, 0]])
+    closest_indices = np.array(closest_indices)
+    return closest_indices
+
+def addH(lmp,relmp,direction,surface_position,ang1=330,ang2=120):
+    """
+    Add hydroxyl groups to the surface of SiO2 in one direction or add hydrogen atoms
+    Parameters:
+    - lmp: lammps data of SiO2
+    - relmp: lammps data of SiO2-OH
+    - direction: surface direction, example: direction="z", 
+                "x": surface in x direction;
+                "y": surface in y direction;
+                "z": surface in z direction;
+    - surface_position: position of surface in a given direction/angstrom
+    - ang1: angle° of H =330;
+    - ang2: angle° of H =120;
+    """
+    error = 0.99
+    idMass_dict, idElem_dict = read_mass(lmp)
+    idElem_dict = {value: key for key, value in idElem_dict.items()}
+    ntype = len(idElem_dict)
+    Atoms = read_data(lmp,"Atoms")
+    Atoms = str2array(Atoms)
+    m, n = Atoms.shape
+    Si_list, Oh_list = [], []
+    box = read_box(lmp)
+    xlo,ylo,zlo = box["xlo"],box["ylo"],box["zlo"]
+
+    if direction=="x" or direction=="X":
+        xyzindex = 4
+        lo = xlo
+    elif direction=="y" or direction=="Y":
+        xyzindex = 5
+        lo = ylo
+    elif direction=="z" or direction=="Z":
+        xyzindex = 6
+        lo = zlo
+    else:
+        # default z
+        xyzindex = 6
+    
+    for i in range(m):
+        for s in surface_position:
+            if abs(float(Atoms[i,xyzindex]) - s) < error:
+                if Atoms[i,2] == idElem_dict["O"]:
+                    Atoms[i,2] = str(ntype+1)
+                    Atoms[i,3] = "-0.950000"
+                    Oh_list.append(Atoms[i,0])
+
+            if abs(float(Atoms[i,xyzindex]) - s) < error+1.6:
+                if Atoms[i,2] == idElem_dict["Si"]:
+                    Si_list.append(Atoms[i,0])
+
+    Atoms_Ho = Atoms[np.isin(Atoms[:, 0], Oh_list)]
+    Atoms_Si = Atoms[np.isin(Atoms[:, 0], Si_list)]
+
+    Header = read_data(lmp,"Header")
+    # Add an atomic type to hydroxy-oxygen
+    Header = modify_header(Header,"atom types",ntype+1).strip()
+    Masses = read_data(lmp,"Masses").strip()
+    # Add mass info to hydroxy-oxygen
+    add_Ohmass = "\n"+str(ntype+1)+" "+idMass_dict[idElem_dict["O"]]+"  # Oh"
+    Masses += add_Ohmass
+    # Add an atomic type for hydroxy hydrogen
+    Header = modify_header(Header,"atom types",ntype+2).strip()
+    # Add mass info to hydroxy hydrogen
+    add_Homass = "\n"+str(ntype+2)+"  1.008000  # H\n"
+    Masses += add_Homass
+    nHo = len(Atoms_Ho)
+    print(">>> Add",str(nHo),"hydroxy hydrogen!")
+    # Add hydrogen coordinates
+    Atoms_Ho[:,0] = np.arange(m + 1,nHo+m+1) # id
+    Atoms_Ho[:,2] = ntype+2 # H type id
+    Atoms_Ho[:,3] = "0.425000" # charge
+    
+    angle1 = np.radians(ang1)
+    dist1 = np.array([np.cos(angle1), 0, np.sin(angle1)])
+    angle2 = np.radians(ang2)
+    dist2 = np.array([np.cos(angle2), 0, np.sin(angle2)])
+    for i in range(nHo):
+        if float(Atoms_Ho[i,xyzindex]) - lo < 1.6:
+            Atoms_Ho[i,4:7] = Atoms_Ho[i,4:7].astype(float) + dist1
+        elif float(Atoms_Ho[i,xyzindex]) - lo > 1.6:
+            Atoms_Ho[i,4:7] = Atoms_Ho[i,4:7].astype(float) + dist2
+    
+    Atoms_addH = np.vstack((Atoms,Atoms_Ho))
+
+    # Modify the total number of atoms
+    Header = modify_header(Header,"atoms",m+nHo).strip()
+
+    # generate Bonds
+    Atoms_Oh = Atoms[np.isin(Atoms[:, 0], Oh_list)]
+    closest_indices0 = find_closest_index(Atoms_Oh,Atoms_Ho)
+
+    Bonds = closest_indices0
+    nBonds = len(Bonds)
+    Bondsid = np.arange(1,nBonds+1) # bond id
+    Bonds = np.insert(Bonds, 0, 1, axis=1)
+    Bonds = np.insert(Bonds, 0, Bondsid, axis=1)
+    Bonds = array2str(Bonds).strip()
+    # Modify the total number of Bonds
+    Header = modify_header(Header,"bonds",nBonds).strip()
+    # Modify the total number of bond types
+    Header = modify_header(Header,"bond types",1).strip()
+
+    # generate Angles
+    closest_indices1 = find_closest_index(Atoms_Si,Atoms_Oh)
+    nAngles = len(closest_indices1)
+    OH_dict = dict(closest_indices0)
+    new_OH = []
+    for i in range(nAngles):
+        new_OH.append(OH_dict[closest_indices1[i,1]])
+    new_OH = np.array(new_OH).reshape(-1,1)
+    Angles = np.hstack((closest_indices1,new_OH))
+    Anglesid = np.arange(1,nAngles+1) # angle id
+    Angles = np.insert(Angles, 0, 1, axis=1) # angle type
+    Angles = np.insert(Angles, 0, Anglesid, axis=1)
+    Angles = array2str(Angles).strip()
+    # Modify the total number of Angles
+    Header = modify_header(Header,"angles",nAngles).strip()
+    # Modify the total number of angle types
+    Header = modify_header(Header,"angle types",1).strip()
+
+
+    f = open(relmp,"w")
+    f.write(Header)
+    f.write("\n")
+    Atoms_addH = array2str(Atoms_addH).strip()
+
+    f.write("\n"+"Masses"+"\n\n")
+    f.write(Masses)
+    f.write("\n"+"Atoms # full"+"\n\n")
+    f.write(Atoms_addH)
+
+    f.write("\n\n"+"Bonds"+"\n\n")
+    f.write(Bonds)
+
+    f.write("\n\n"+"Angles"+"\n\n")
+    f.write(Angles)
+
+    f.close()
+    return
+
+
 
 if __name__ == '__main__':
 
