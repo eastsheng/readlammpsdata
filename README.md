@@ -48,6 +48,11 @@ print(help(rld)) # for read all functions
 
 ### Fixes
 
+- 2023-11-22
+  - [x] Added the `change_lmp_axis` function
+  - [x] Added the `coord2zero` function
+  - [x] Added the `addH` function
+  - [x] Added the `cut_lmp_atoms` function
 - 2023-10-21
   - [x] Added the `exchange_position` function
 - 2023-10-20
