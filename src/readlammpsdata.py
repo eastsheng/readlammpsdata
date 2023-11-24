@@ -8,7 +8,7 @@ def __version__():
     """
     read the version of readlammpsdata
     """
-    version = "1.0.7"
+    version = "1.0.8"
     return version
 
 def print_version():
@@ -1979,13 +1979,43 @@ def coord2zero(lmp,relmp):
     return
 
 
-def find_closest_index(Atoms_Si,Atoms_Oh):
+def adjust_distance_periodic_rectangular(point1, point2, box_size):
+    point1_array = np.array(point1)
+    point2_array = np.array(point2)
+    distances = np.abs(point1_array - point2_array)
+    adjusted_distances = np.where(distances > np.array(box_size) / 2, np.array(box_size) - distances, distances)
+    
+    adjusted_point2 = point1_array + np.sign(point2_array - point1_array) * adjusted_distances
+
+    return point1, adjusted_point2
+
+def find_closest_SiO_index(Atoms_Si,Atoms_Oh,box):
     closest_indices = []
     for row1 in Atoms_Si:
         coords1 = row1[4:7].astype(float)
-        distances = np.linalg.norm(Atoms_Oh[:, 4:7].astype(float) - coords1, axis=1)
+        point1, adjusted_point2 = adjust_distance_periodic_rectangular(Atoms_Oh[:, 4:7].astype(float),coords1,box)
+        distances = np.linalg.norm(point1 - adjusted_point2, axis=1)
+        indices = np.where(distances < 2.0)
+        # print(indices)
+        try:
+            closest_index1 = indices[0][0]
+            closest_index2 = indices[0][1]
+            closest_indices.append([row1[0], Atoms_Oh[closest_index1, 0]])
+            closest_indices.append([row1[0], Atoms_Oh[closest_index2, 0]])
+        except:
+            closest_index1 = indices[0][0]
+            closest_indices.append([row1[0], Atoms_Oh[closest_index1, 0]])
+
+    closest_indices = np.array(closest_indices)
+    return closest_indices
+
+def find_closest_OH_index(Atoms_Oh,Atoms_Ho):
+    closest_indices = []
+    for row1 in Atoms_Oh:
+        coords1 = row1[4:7].astype(float)
+        distances = np.linalg.norm(Atoms_Ho[:, 4:7].astype(float) - coords1, axis=1)
         closest_index = np.argmin(distances)
-        closest_indices.append([row1[0], Atoms_Oh[closest_index, 0]])
+        closest_indices.append([row1[0], Atoms_Ho[closest_index, 0]])
     closest_indices = np.array(closest_indices)
     return closest_indices
 
@@ -2005,6 +2035,10 @@ def addH(lmp,relmp,H_block,ang=90,direction="y"):
     """
     error = 0.99
     idMass_dict, idElem_dict = read_mass(lmp)
+    Lx = read_len(lmp,"x")
+    Ly = read_len(lmp,"y")
+    Lz = read_len(lmp,"z")
+    box = [Lx,Ly,Lz]
     ntype = len(idElem_dict)
     print(">>> Type: element",idElem_dict)
     idElem_dict = {value: key for key, value in idElem_dict.items()}
@@ -2088,42 +2122,51 @@ def addH(lmp,relmp,H_block,ang=90,direction="y"):
 
     # Modify the total number of atoms
     Header = modify_header(Header,"atoms",m+nHo).strip()
-
     # generate Bonds
+    initBonds = str2array(read_data(lmp,"Bonds"))
+    init_nBonds=len(initBonds)
     try:
         Atoms_Oh = Atoms[np.isin(Atoms[:, 0], Oh_list)]
-        closest_indices0 = find_closest_index(Atoms_Oh,Atoms_Ho)
+        closest_indices0 = find_closest_OH_index(Atoms_Oh,Atoms_Ho)
 
-        Bonds = closest_indices0
-        nBonds = len(Bonds)
-        Bondsid = np.arange(1,nBonds+1) # bond id
-        Bonds = np.insert(Bonds, 0, 1, axis=1)
-        Bonds = np.insert(Bonds, 0, Bondsid, axis=1)
-        Bonds = array2str(Bonds).strip()
+        addBonds = closest_indices0
+
+        naddBonds = len(addBonds)
+        Bondsid = np.arange(1+init_nBonds,naddBonds+init_nBonds+1) # bond id
+        addBonds = np.insert(addBonds, 0, 1, axis=1)
+        addBonds = np.insert(addBonds, 0, Bondsid, axis=1)
         # Modify the total number of Bonds
-        Header = modify_header(Header,"bonds",nBonds).strip()
+        Header = modify_header(Header,"bonds",naddBonds+init_nBonds).strip()
         # Modify the total number of bond types
         Header = modify_header(Header,"bond types",1).strip()
+        Bonds = np.vstack((initBonds,addBonds))
+        Bonds = array2str(Bonds).strip()
     except:
         print("??? add Bonds error!")
     # generate Angles
+    initAngles = str2array(read_data(lmp,"Angles"))
+    init_nAngles=len(initAngles)
     try:
-        closest_indices1 = find_closest_index(Atoms_Si,Atoms_Oh)
+        closest_indices1 = find_closest_SiO_index(Atoms_Si,Atoms_Oh,box)
+        # print(closest_indices1)
         nAngles = len(closest_indices1)
+        print(">>> add ",str(nAngles)," Angles!")
         OH_dict = dict(closest_indices0)
+        # print(OH_dict)
         new_OH = []
         for i in range(nAngles):
             new_OH.append(OH_dict[closest_indices1[i,1]])
         new_OH = np.array(new_OH).reshape(-1,1)
-        Angles = np.hstack((closest_indices1,new_OH))
-        Anglesid = np.arange(1,nAngles+1) # angle id
-        Angles = np.insert(Angles, 0, 1, axis=1) # angle type
-        Angles = np.insert(Angles, 0, Anglesid, axis=1)
-        Angles = array2str(Angles).strip()
+        addAngles = np.hstack((closest_indices1,new_OH))
+        Anglesid = np.arange(1+init_nAngles,nAngles+init_nAngles+1) # angle id
+        addAngles = np.insert(addAngles, 0, 1, axis=1) # angle type
+        addAngles = np.insert(addAngles, 0, Anglesid, axis=1)
         # Modify the total number of Angles
-        Header = modify_header(Header,"angles",nAngles).strip()
+        Header = modify_header(Header,"angles",init_nAngles+nAngles).strip()
         # Modify the total number of angle types
         Header = modify_header(Header,"angle types",1).strip()
+        Angles = np.vstack((initAngles,addAngles))
+        Angles = array2str(Angles).strip()
     except:
         print("??? add Angles error!")
 
