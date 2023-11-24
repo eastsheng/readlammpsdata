@@ -48,6 +48,8 @@ print(help(rld)) # for read all functions
 
 ### Fixes
 
+- 2023-11-24
+  - [x] Fixed bugs of  `addH`
 - 2023-11-22
   - [x] Added the `change_lmp_axis` function
   - [x] Added the `coord2zero` function
