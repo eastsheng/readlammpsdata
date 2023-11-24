@@ -8,7 +8,7 @@ def __version__():
     """
     read the version of readlammpsdata
     """
-    version = "1.0.8"
+    version = "1.0.9"
     return version
 
 def print_version():
@@ -2123,8 +2123,13 @@ def addH(lmp,relmp,H_block,ang=90,direction="y"):
     # Modify the total number of atoms
     Header = modify_header(Header,"atoms",m+nHo).strip()
     # generate Bonds
-    initBonds = str2array(read_data(lmp,"Bonds"))
-    init_nBonds=len(initBonds)
+    try:
+        initBonds = str2array(read_data(lmp,"Bonds"))
+        init_nBonds=len(initBonds)
+    except:
+        initBonds = None
+        init_nBonds = 0
+
     try:
         Atoms_Oh = Atoms[np.isin(Atoms[:, 0], Oh_list)]
         closest_indices0 = find_closest_OH_index(Atoms_Oh,Atoms_Ho)
@@ -2144,8 +2149,12 @@ def addH(lmp,relmp,H_block,ang=90,direction="y"):
     except:
         print("??? add Bonds error!")
     # generate Angles
-    initAngles = str2array(read_data(lmp,"Angles"))
-    init_nAngles=len(initAngles)
+    try:
+        initAngles = str2array(read_data(lmp,"Angles"))
+        init_nAngles=len(initAngles)
+    except:
+        initAngles = None
+        init_nAngles = 0
     try:
         closest_indices1 = find_closest_SiO_index(Atoms_Si,Atoms_Oh,box)
         # print(closest_indices1)
