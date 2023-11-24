@@ -2127,7 +2127,6 @@ def addH(lmp,relmp,H_block,ang=90,direction="y"):
         initBonds = str2array(read_data(lmp,"Bonds"))
         init_nBonds=len(initBonds)
     except:
-        initBonds = None
         init_nBonds = 0
 
     try:
@@ -2144,7 +2143,10 @@ def addH(lmp,relmp,H_block,ang=90,direction="y"):
         Header = modify_header(Header,"bonds",naddBonds+init_nBonds).strip()
         # Modify the total number of bond types
         Header = modify_header(Header,"bond types",1).strip()
-        Bonds = np.vstack((initBonds,addBonds))
+        if init_nBonds == 0:
+            Bonds = addBonds
+        else:
+            Bonds = np.vstack((initBonds,addBonds))
         Bonds = array2str(Bonds).strip()
     except:
         print("??? add Bonds error!")
@@ -2153,7 +2155,6 @@ def addH(lmp,relmp,H_block,ang=90,direction="y"):
         initAngles = str2array(read_data(lmp,"Angles"))
         init_nAngles=len(initAngles)
     except:
-        initAngles = None
         init_nAngles = 0
     try:
         closest_indices1 = find_closest_SiO_index(Atoms_Si,Atoms_Oh,box)
@@ -2174,7 +2175,10 @@ def addH(lmp,relmp,H_block,ang=90,direction="y"):
         Header = modify_header(Header,"angles",init_nAngles+nAngles).strip()
         # Modify the total number of angle types
         Header = modify_header(Header,"angle types",1).strip()
-        Angles = np.vstack((initAngles,addAngles))
+        if init_nAngles == 0:
+            Angles = addAngles
+        else:
+            Angles = np.vstack((initAngles,addAngles))
         Angles = array2str(Angles).strip()
     except:
         print("??? add Angles error!")
