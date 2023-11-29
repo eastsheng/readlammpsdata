@@ -1377,9 +1377,9 @@ def move_boundary(lmp,relmp,distance,direction="y"):
     m,n = Atoms.shape
     for i in range(m):
         Atoms[i][index] = float(Atoms[i][index])-distance
-        if float(Atoms[i][index]) <= lo:
+        if float(Atoms[i][index]) < lo:
             Atoms[i][index] = float(Atoms[i][index])+ll
-        elif float(Atoms[i][index]) >= hi:
+        elif float(Atoms[i][index]) > hi:
             Atoms[i][index] = float(Atoms[i][index])-ll
 
         Atoms[i][index] = str(float(Atoms[i][index]))
