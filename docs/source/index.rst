@@ -12,12 +12,3 @@ Welcome to readlammpsdata's documentation!
 	
    quick_start
    usages
-
-   
-   
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
