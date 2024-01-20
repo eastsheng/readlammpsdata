@@ -47,6 +47,7 @@ latex_elements = {
 	'preamble': '\\usepackage[UTF8]{ctex}\n',
 }
 
+from recommonmark.parser import CommonMarkParser
 source_parsers = {
 	'.md': 'recommonmark.parser.CommonMarkParser',
 }
