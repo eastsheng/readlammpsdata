@@ -46,6 +46,8 @@ print(round(sum(charges),6))
 print(help(rld)) # for read all functions
 ```
 
+- [read more](https://readlammpsdata.readthedocs.io/en/latest/)
+
 ### Fixes
 
 - 2023-11-24

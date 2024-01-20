@@ -10,9 +10,11 @@ Welcome to readlammpsdata's documentation!
    :maxdepth: 2
    :caption: Contents:
 	
-	quick_start
+   quick_start
+   usages
 
-
+   
+   
 Indices and tables
 ==================
 

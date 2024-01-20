@@ -2237,6 +2237,7 @@ if __name__ == '__main__':
 	# print(__version__())
 	print_version()
 	# msi2clayff("sio2_1nm.data","sio2_1nm_clayff.data")
-	# read_total_mass("PVP.lmp")
+	# Atoms = read_data(lmp="PVP.lmp", data_sub_str = "Masses")
+	# print(Atoms)
 
 
