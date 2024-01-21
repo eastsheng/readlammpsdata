@@ -5,18 +5,20 @@ import readlammpsdata as rld
 
 if __name__ == '__main__':
     path = "./"
-    lmp = path+"UNK_0735D7.lmp"
-    print(rld.__version__())
+    lmp = path+"PVP.lmp"
+    # print(rld.__version__())
     # trems = rld.read_terms(lmp)
     # print(trems)
-    # # 0. read data
+    # 0. read data
     # Masses = rld.read_data(lmp,"Pair Coeffs")
     # print(Masses)
     # # 1. read box size
     # xyz = rld.read_box(lmp)
-    # Lx = xyz["xhi"]-xyz["xlo"]
+    # lx = xyz["xhi"]-xyz["xlo"]
+    # ly = xyz["yhi"]-xyz["ylo"]
+    # lz = xyz["zhi"]-xyz["zlo"]
     # print(xyz)
-    # print(Lx)
+    # print(lx,ly,lz)
     # # 2.1 read atomic number 
     # Natoms = rld.read_atom_info(lmp,"atoms")
     # print("Number of atoms is %s" %Natoms)
@@ -36,7 +38,7 @@ if __name__ == '__main__':
     # Nimpropers = rld.read_atom_info(lmp,"angle types")
     # print("Number of improper types is %s" %Nimpropers)
 
-    # # 3. read charges 
+    # 3. read charges 
     # charges = rld.read_charges(lmp)
     # print("Charges of atoms are %s" %charges)
     # print(round(sum(charges),6))
@@ -45,14 +47,14 @@ if __name__ == '__main__':
 
     # # 4. read vol
     # vol = rld.read_vol(lmp)
-    # print(help(rld.read_data))
+    # print(vol)
     
     # # 5. read xyz from xyz file    # xyzfile = "./Lecithin.xyz"
     # elements, xyz = rld.read_xyz(xyzfile)
     # print(elements)
     # # 6. read pdb from pdb file
-    pdbfile = "./Lecithin.pdb"
-    elements = rld.read_pdb(pdbfile,"all")
-    print(elements[0])
-    print(help(rld.read_pdb))
+    # pdbfile = "./Lecithin.pdb"
+    # elements = rld.read_pdb(pdbfile,"all")
+    # print(elements[0])
+    # print(help(rld.read_pdb))
 

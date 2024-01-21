@@ -12,3 +12,4 @@ Welcome to readlammpsdata's documentation!
 	
    quick_start
    usages
+   examples

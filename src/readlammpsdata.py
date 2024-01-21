@@ -1179,12 +1179,15 @@ def array2str(array):
 	"""
 	string = ""
 	for row in array:
+		print(row)
+		try:
+			row = [str(i) for i in row]
+		except:
+			row = str(row)
 		string += "  ".join(row)+"\n"
 	string = "\n\n"+string+"\n"
 	print(">>> Convert a array to a string for writing successfully !")
-
 	return string
-
 
 def add_atoms(Atoms, add_atoms):
 	"""
@@ -2237,7 +2240,6 @@ if __name__ == '__main__':
 	# print(__version__())
 	print_version()
 	# msi2clayff("sio2_1nm.data","sio2_1nm_clayff.data")
-	# Atoms = read_data(lmp="PVP.lmp", data_sub_str = "Masses")
-	# print(Atoms)
+	# Atoms = read_data(lmp="PVP.lmp", data_sub_str = "Atoms")
 
 

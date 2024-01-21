@@ -72,7 +72,7 @@
 
 
 \title{readlammpsdata}
-\date{Jan 20, 2024}
+\date{Jan 21, 2024}
 \release{1.0.9}
 \author{eastsheng}
 \newcommand{\sphinxlogo}{\vbox{}}
@@ -173,6 +173,213 @@ read data
 \section{General commands}
 \label{\detokenize{usages:general-commands}}
 
+
+\sphinxstepscope
+
+
+\chapter{Examples}
+\label{\detokenize{examples:examples}}\label{\detokenize{examples::doc}}
+
+\section{Read trems of lammpsdata}
+\label{\detokenize{examples:read-trems-of-lammpsdata}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{k+kn}{import} \PYG{n+nn}{readlammpsdata} \PYG{k}{as} \PYG{n+nn}{rld}
+\PYG{n}{lmp} \PYG{o}{=}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{PVP.lmp}\PYG{l+s+s2}{\PYGZdq{}}
+\PYG{n}{trems} \PYG{o}{=} \PYG{n}{rld}\PYG{o}{.}\PYG{n}{read\PYGZus{}terms}\PYG{p}{(}\PYG{n}{lmp}\PYG{p}{)}
+\PYG{n+nb}{print}\PYG{p}{(}\PYG{n}{trems}\PYG{p}{)}
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}output}
+\PYG{l+s+sd}{[\PYGZsq{}Masses\PYGZsq{}, \PYGZsq{}Pair Coeffs\PYGZsq{}, \PYGZsq{}Bond Coeffs\PYGZsq{}, \PYGZsq{}Angle Coeffs\PYGZsq{}, \PYGZsq{}Dihedral Coeffs\PYGZsq{}, \PYGZsq{}Improper Coeffs\PYGZsq{}, \PYGZsq{}Atoms \PYGZsh{} full\PYGZsq{}, \PYGZsq{}Bonds\PYGZsq{}, \PYGZsq{}Angles\PYGZsq{}, \PYGZsq{}Dihedrals\PYGZsq{}, \PYGZsq{}Impropers\PYGZsq{}]}
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\end{sphinxVerbatim}
+
+
+\section{Read data}
+\label{\detokenize{examples:read-data}}\begin{itemize}
+\item {} 
+\sphinxAtStartPar
+Read “Atoms”
+
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{n}{Atoms} \PYG{o}{=} \PYG{n}{rld}\PYG{o}{.}\PYG{n}{read\PYGZus{}data}\PYG{p}{(}\PYG{n}{lmp}\PYG{p}{,}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Atoms}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+\PYG{c+c1}{\PYGZsh{} or Atoms = rld.read\PYGZus{}data(lmp,\PYGZdq{}Atoms \PYGZsh{} full\PYGZdq{})}
+\PYG{n+nb}{print}\PYG{p}{(}\PYG{n}{Atoms}\PYG{p}{)}
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}output}
+\PYG{l+s+sd}{\PYGZgt{}\PYGZgt{}\PYGZgt{} Read data Atoms successfully !}
+
+\PYG{l+s+sd}{     1      1      1 \PYGZhy{}0.35160000    1.000  1.00000  0.00000}
+\PYG{l+s+sd}{     2      1      2 0.13720000   \PYGZhy{}0.337  1.00000  0.00000}
+\PYG{l+s+sd}{     3      1      3 \PYGZhy{}0.79220000   \PYGZhy{}1.134  1.00000  1.11526}
+\PYG{l+s+sd}{	...}
+\PYG{l+s+sd}{    13      1     13 0.10870000    0.222  0.44931  2.64132}
+\PYG{l+s+sd}{    14      1     14 0.11370000   \PYGZhy{}1.868  0.86334  4.30672}
+\PYG{l+s+sd}{    15      1     15 0.11370000   \PYGZhy{}1.804 \PYGZhy{}0.58670  3.28942}
+\PYG{l+s+sd}{    16      1     16 0.14040000   \PYGZhy{}3.408  1.94658  2.77089}
+\PYG{l+s+sd}{    17      1     17 0.14040000   \PYGZhy{}3.873  0.22675  2.53818}
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\end{sphinxVerbatim}
+
+\item {} 
+\sphinxAtStartPar
+read “others trems” data
+
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{n}{Masses} \PYG{o}{=} \PYG{n}{read\PYGZus{}data}\PYG{p}{(}\PYG{n}{lmp}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Masses}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+\PYG{n}{BondCoeffs} \PYG{o}{=} \PYG{n}{read\PYGZus{}data}\PYG{p}{(}\PYG{n}{lmp}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Bond Coeffs}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+\PYG{n}{AngleCoeffs} \PYG{o}{=} \PYG{n}{read\PYGZus{}data}\PYG{p}{(}\PYG{n}{lmp}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Angle Coeffs}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+\PYG{n}{DihedralCoeffs} \PYG{o}{=} \PYG{n}{read\PYGZus{}data}\PYG{p}{(}\PYG{n}{lmp}\PYG{p}{,} \PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Dihedral Coeffs}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+\PYG{o}{.}\PYG{o}{.}\PYG{o}{.}
+\end{sphinxVerbatim}
+
+\end{itemize}
+
+
+\section{Read Box size}
+\label{\detokenize{examples:read-box-size}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{n}{xyz} \PYG{o}{=} \PYG{n}{rld}\PYG{o}{.}\PYG{n}{read\PYGZus{}box}\PYG{p}{(}\PYG{n}{lmp}\PYG{p}{)}
+\PYG{n}{lx} \PYG{o}{=} \PYG{n}{xyz}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{xhi}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}\PYG{o}{\PYGZhy{}}\PYG{n}{xyz}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{xlo}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
+\PYG{n}{ly} \PYG{o}{=} \PYG{n}{xyz}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{yhi}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}\PYG{o}{\PYGZhy{}}\PYG{n}{xyz}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{ylo}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
+\PYG{n}{lz} \PYG{o}{=} \PYG{n}{xyz}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{zhi}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}\PYG{o}{\PYGZhy{}}\PYG{n}{xyz}\PYG{p}{[}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{zlo}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{]}
+\PYG{n+nb}{print}\PYG{p}{(}\PYG{n}{xyz}\PYG{p}{)}
+\PYG{n+nb}{print}\PYG{p}{(}\PYG{n}{lx}\PYG{p}{,}\PYG{n}{ly}\PYG{p}{,}\PYG{n}{lz}\PYG{p}{)}
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+sd}{\PYGZob{}\PYGZsq{}xlo\PYGZsq{}: \PYGZhy{}3.87301, \PYGZsq{}xhi\PYGZsq{}: 46.12699, \PYGZsq{}ylo\PYGZsq{}: \PYGZhy{}0.5867, \PYGZsq{}yhi\PYGZsq{}: 49.4133, \PYGZsq{}zlo\PYGZsq{}: \PYGZhy{}0.95115, \PYGZsq{}zhi\PYGZsq{}: 49.04885\PYGZcb{}}
+\PYG{l+s+sd}{50.0 50.0 50.0}
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+
+\PYG{n}{lx} \PYG{o}{=} \PYG{n}{rld}\PYG{o}{.}\PYG{n}{read\PYGZus{}len}\PYG{p}{(}\PYG{n}{lmp}\PYG{p}{,}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{x}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+\PYG{n}{ly} \PYG{o}{=} \PYG{n}{rld}\PYG{o}{.}\PYG{n}{read\PYGZus{}len}\PYG{p}{(}\PYG{n}{lmp}\PYG{p}{,}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{y}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+\PYG{n}{lz} \PYG{o}{=} \PYG{n}{rld}\PYG{o}{.}\PYG{n}{read\PYGZus{}len}\PYG{p}{(}\PYG{n}{lmp}\PYG{p}{,}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{z}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+\PYG{n+nb}{print}\PYG{p}{(}\PYG{n}{lx}\PYG{p}{,}\PYG{n}{ly}\PYG{p}{,}\PYG{n}{lz}\PYG{p}{)}
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+sd}{\PYGZgt{}\PYGZgt{}\PYGZgt{} Read data Header successfully !}
+\PYG{l+s+sd}{\PYGZgt{}\PYGZgt{}\PYGZgt{} Read size of x direction successfully !}
+\PYG{l+s+sd}{\PYGZgt{}\PYGZgt{}\PYGZgt{} Read data Header successfully !}
+\PYG{l+s+sd}{\PYGZgt{}\PYGZgt{}\PYGZgt{} Read size of y direction successfully !}
+\PYG{l+s+sd}{\PYGZgt{}\PYGZgt{}\PYGZgt{} Read data Header successfully !}
+\PYG{l+s+sd}{\PYGZgt{}\PYGZgt{}\PYGZgt{} Read size of z direction successfully !}
+\PYG{l+s+sd}{50.0 50.0 50.0}
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\end{sphinxVerbatim}
+
+
+\section{Read atomic infos}
+\label{\detokenize{examples:read-atomic-infos}}\begin{itemize}
+\item {} 
+\sphinxAtStartPar
+Number of atoms:
+
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{n}{Natoms} \PYG{o}{=} \PYG{n}{rld}\PYG{o}{.}\PYG{n}{read\PYGZus{}atom\PYGZus{}info}\PYG{p}{(}\PYG{n}{lmp}\PYG{p}{,}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{atoms}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+\PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Number of atoms is }\PYG{l+s+si}{\PYGZpc{}s}\PYG{l+s+s2}{\PYGZdq{}} \PYG{o}{\PYGZpc{}}\PYG{n}{Natoms}\PYG{p}{)}
+
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+sd}{\PYGZgt{}\PYGZgt{}\PYGZgt{} Read data Header successfully !}
+\PYG{l+s+sd}{\PYGZgt{}\PYGZgt{}\PYGZgt{} Read data Header successfully !}
+\PYG{l+s+sd}{Number of atoms is 17}
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\end{sphinxVerbatim}
+
+\item {} 
+\sphinxAtStartPar
+Number of bonds:
+
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{n}{Nbonds} \PYG{o}{=} \PYG{n}{rld}\PYG{o}{.}\PYG{n}{read\PYGZus{}atom\PYGZus{}info}\PYG{p}{(}\PYG{n}{lmp}\PYG{p}{,}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{bonds}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+\PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Number of bonds is }\PYG{l+s+si}{\PYGZpc{}s}\PYG{l+s+s2}{\PYGZdq{}} \PYG{o}{\PYGZpc{}}\PYG{n}{Nbonds}\PYG{p}{)}
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+sd}{\PYGZgt{}\PYGZgt{}\PYGZgt{} Read data Header successfully !}
+\PYG{l+s+sd}{\PYGZgt{}\PYGZgt{}\PYGZgt{} Read data Header successfully !}
+\PYG{l+s+sd}{Number of bonds is 17}
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\end{sphinxVerbatim}
+
+\item {} 
+\sphinxAtStartPar
+Number of angles, dihedrals, impropers, same as above
+
+\end{itemize}
+
+
+\section{Read charges}
+\label{\detokenize{examples:read-charges}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{n}{charges} \PYG{o}{=} \PYG{n}{rld}\PYG{o}{.}\PYG{n}{read\PYGZus{}charges}\PYG{p}{(}\PYG{n}{lmp}\PYG{p}{)}
+\PYG{n+nb}{print}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{Charges of atoms are }\PYG{l+s+si}{\PYGZpc{}s}\PYG{l+s+s2}{\PYGZdq{}} \PYG{o}{\PYGZpc{}}\PYG{n}{charges}\PYG{p}{)}
+\PYG{n+nb}{print}\PYG{p}{(}\PYG{n+nb}{round}\PYG{p}{(}\PYG{n+nb}{sum}\PYG{p}{(}\PYG{n}{charges}\PYG{p}{)}\PYG{p}{,}\PYG{l+m+mi}{6}\PYG{p}{)}\PYG{p}{)}
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+sd}{\PYGZgt{}\PYGZgt{}\PYGZgt{} Read charges successfully !}
+\PYG{l+s+sd}{Charges of atoms are [\PYGZhy{}0.3516  0.1372 \PYGZhy{}0.7922  0.1074 \PYGZhy{}0.2058 \PYGZhy{}0.2204  0.5562 \PYGZhy{}0.4121  0.1379  0.1379  0.1799  0.1087  0.1087  0.1137  0.1137  0.1404  0.1404]}
+\PYG{l+s+sd}{\PYGZhy{}0.0}
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\end{sphinxVerbatim}
+
+
+\section{Read volume}
+\label{\detokenize{examples:read-volume}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{n}{vol} \PYG{o}{=} \PYG{n}{rld}\PYG{o}{.}\PYG{n}{read\PYGZus{}vol}\PYG{p}{(}\PYG{n}{lmp}\PYG{p}{)}
+\PYG{n+nb}{print}\PYG{p}{(}\PYG{n}{vol}\PYG{p}{)}
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+sd}{\PYGZgt{}\PYGZgt{}\PYGZgt{} Read data Header successfully !}
+\PYG{l+s+sd}{\PYGZgt{}\PYGZgt{}\PYGZgt{} Read size of x direction successfully !}
+\PYG{l+s+sd}{\PYGZgt{}\PYGZgt{}\PYGZgt{} Read data Header successfully !}
+\PYG{l+s+sd}{\PYGZgt{}\PYGZgt{}\PYGZgt{} Read size of y direction successfully !}
+\PYG{l+s+sd}{\PYGZgt{}\PYGZgt{}\PYGZgt{} Read data Header successfully !}
+\PYG{l+s+sd}{\PYGZgt{}\PYGZgt{}\PYGZgt{} Read size of z direction successfully !}
+\PYG{l+s+sd}{\PYGZgt{}\PYGZgt{}\PYGZgt{} Read volume of system successfully !}
+\PYG{l+s+sd}{125.0}
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\end{sphinxVerbatim}
+
+
+\section{Sort lmp}
+\label{\detokenize{examples:sort-lmp}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{n}{rld}\PYG{o}{.}\PYG{n}{sort\PYGZus{}lmp}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{PVP.lmp}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{PVP\PYGZus{}sort.lmp}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+\end{sphinxVerbatim}
+
+
+\section{lammpsdata to xyz}
+\label{\detokenize{examples:lammpsdata-to-xyz}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{n}{rld}\PYG{o}{.}\PYG{n}{lmp2xyz}\PYG{p}{(}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{PVP.lmp}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{,}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{PVP.xyz}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+sd}{\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}  Program Start  \PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}}
+\PYG{l+s+sd}{\PYGZgt{}\PYGZgt{}\PYGZgt{} Read data Masses successfully !}
+\PYG{l+s+sd}{\PYGZgt{}\PYGZgt{}\PYGZgt{} Convert the id masses to element list successfully !}
+\PYG{l+s+sd}{\PYGZgt{}\PYGZgt{}\PYGZgt{} Read the id masses and element dicts successfully !}
+\PYG{l+s+sd}{\PYGZgt{}\PYGZgt{}\PYGZgt{} Read data Atoms successfully !}
+\PYG{l+s+sd}{\PYGZgt{}\PYGZgt{}\PYGZgt{} Convert lammps data (lmp) file to xyz file successfully !}
+\PYG{l+s+sd}{\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{} Run time: 0.04 s  \PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}}
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\end{sphinxVerbatim}
+
+
+\section{lammpsdata to lammpstrj}
+\label{\detokenize{examples:lammpsdata-to-lammpstrj}}
+\begin{sphinxVerbatim}[commandchars=\\\{\}]
+\PYG{n}{rld}\PYG{o}{.}\PYG{n}{lmp2lammpstrj}\PYG{p}{(}\PYG{n}{lmp}\PYG{p}{,}\PYG{l+s+s2}{\PYGZdq{}}\PYG{l+s+s2}{PVP.lammpstrj}\PYG{l+s+s2}{\PYGZdq{}}\PYG{p}{)}
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\PYG{l+s+sd}{\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}  Program Start  \PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}}
+\PYG{l+s+sd}{\PYGZgt{}\PYGZgt{}\PYGZgt{} Read data Masses successfully !}
+\PYG{l+s+sd}{\PYGZgt{}\PYGZgt{}\PYGZgt{} Convert the id masses to element list successfully !}
+\PYG{l+s+sd}{\PYGZgt{}\PYGZgt{}\PYGZgt{} Read the id masses and element dicts successfully !}
+\PYG{l+s+sd}{\PYGZgt{}\PYGZgt{}\PYGZgt{} Read data Atoms successfully !}
+\PYG{l+s+sd}{\PYGZgt{}\PYGZgt{}\PYGZgt{} Read data Header successfully !}
+\PYG{l+s+sd}{\PYGZgt{}\PYGZgt{}\PYGZgt{} Convert lammps data (lmp) file to lammpstrj file successfully !}
+\PYG{l+s+sd}{\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{} Run time: 0.0 s  \PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}\PYGZhy{}}
+\PYG{l+s+sd}{\PYGZdq{}\PYGZdq{}\PYGZdq{}}
+\end{sphinxVerbatim}
+
+
+\section{others}
+\label{\detokenize{examples:others}}\begin{itemize}
+\item {} 
+\sphinxAtStartPar
+to be continued
+
+\end{itemize}
 
 
 
