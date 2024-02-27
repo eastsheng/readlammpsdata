@@ -1179,7 +1179,7 @@ def array2str(array):
 	"""
 	string = ""
 	for row in array:
-		print(row)
+		# print(row)
 		try:
 			row = [str(i) for i in row]
 		except:
