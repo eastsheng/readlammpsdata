@@ -168,7 +168,10 @@ def read_box(lmp):
 					try:
 						x = extract_substring(Header,"bond types","xlo xhi").strip().split()
 					except:
-						print("??? Error: No find 'xlo xhi'!")
+						try:
+							x = extract_substring(Header,"types","xlo xhi").strip().split()
+						except:
+							print("??? Error: No find 'xlo xhi'!")
 	
 	y = extract_substring(Header,"xlo xhi","ylo yhi").strip().split()
 	z = extract_substring(Header,"ylo yhi","zlo zhi").strip().split()
@@ -2233,6 +2236,15 @@ def read_total_mass(lmp):
 
 	return total_mass
 
+def read_atomic_number(lmp):
+	atom_dict = {}
+	Atoms = str2array(read_data(lmp, "Atoms"))
+	Atomtypes = Atoms[:,2]
+	ntypes = Counter(Atomtypes)
+	atom_dict = dict(ntypes)
+	print(f">>> Read atomic number successfully !")
+	return atom_dict
+
 
 
 if __name__ == '__main__':
@@ -2241,5 +2253,7 @@ if __name__ == '__main__':
 	print_version()
 	# msi2clayff("sio2_1nm.data","sio2_1nm_clayff.data")
 	# Atoms = read_data(lmp="PVP.lmp", data_sub_str = "Atoms")
+	read_atomic_number(lmp="PVP.lmp")
+	# print(Atoms)
 
 

@@ -168,7 +168,10 @@ def read_box(lmp):
 					try:
 						x = extract_substring(Header,"bond types","xlo xhi").strip().split()
 					except:
-						print("??? Error: No find 'xlo xhi'!")
+						try:
+							x = extract_substring(Header,"types","xlo xhi").strip().split()
+						except:
+							print("??? Error: No find 'xlo xhi'!")
 	
 	y = extract_substring(Header,"xlo xhi","ylo yhi").strip().split()
 	z = extract_substring(Header,"ylo yhi","zlo zhi").strip().split()
