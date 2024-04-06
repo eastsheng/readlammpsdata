@@ -402,11 +402,12 @@ def modify_pos(lmp,pdbxyz):
 	return Atoms
 
 @print_line
-def modify_pore_size(lammpsdata,modify_data,modify_size=0,pdbxyz=None):
+def modify_pore_size(lammpsdata,modify_data,atomstype=None,modify_size=0,pdbxyz=None):
 	"""
 	modify the pore size of lammpsdata
 	lammpsdata: lammps data file name
 	modify_data: rewrite lammps data file name
+	atomstype: type id of atoms need to modify, [4,5,6,7]
 	modify_size: increase or decrease pore size, unit/nm
 	pdbxyz: pdb of xyz file, modify lammpsdata position by pdb or xyz, default None
 	"""
@@ -416,11 +417,12 @@ def modify_pore_size(lammpsdata,modify_data,modify_size=0,pdbxyz=None):
 		# print(Header[i])
 		if "zlo zhi" in Header[i]:
 			Header[i] = Header[i].split()
-			Header[i][1] = float(Header[i][1])+modify_size*10
-			Header[i][1] = Header[i][1]-float(Header[i][0])
-			Header[i][0] = "0.0"
+			Header[i][1] = float(Header[i][1])+modify_size*10*0.5
+			Header[i][0] = float(Header[i][0])-modify_size*10*0.5
+			Header[i][0] = str(Header[i][0])
 			Header[i][1] = str(Header[i][1])
-			Header[i] = "\t".join(Header[i])
+			Header[i] = " ".join(Header[i])
+			Header[i] = "  "+Header[i]
 
 	Masses = read_data(lammpsdata,"Masses")
 	PairCoeffs = read_data(lammpsdata,"Pair Coeffs")
@@ -441,11 +443,27 @@ def modify_pore_size(lammpsdata,modify_data,modify_size=0,pdbxyz=None):
 	except:
 		pass
 	m, n = Atoms.shape
-	for i in range(m):
-		Atoms[i,6] = float(Atoms[i,6])
-		if float(Atoms[i,6]) > (Lz/2.0):
-			Atoms[i,6] = float(Atoms[i,6]) + modify_size*10
-			Atoms[i,6] = str(Atoms[i,6])
+	if atomstype:
+		for i in range(m):
+			Atoms[i,6] = float(Atoms[i,6])
+			if int(Atoms[i,2]) in atomstype:
+				if float(Atoms[i,6]) > (Lz/2.0):
+					Atoms[i,6] = float(Atoms[i,6]) + modify_size*10*0.5
+					Atoms[i,6] = str(Atoms[i,6])
+				elif float(Atoms[i,6]) <= (Lz/2.0):
+					Atoms[i,6] = float(Atoms[i,6]) - modify_size*10*0.5
+					Atoms[i,6] = str(Atoms[i,6])
+
+	else:
+		for i in range(m):
+			Atoms[i,6] = float(Atoms[i,6])
+			if float(Atoms[i,6]) > (Lz/2.0):
+				Atoms[i,6] = float(Atoms[i,6]) + modify_size*10*0.5
+				Atoms[i,6] = str(Atoms[i,6])
+			elif float(Atoms[i,6]) <= (Lz/2.0):
+				Atoms[i,6] = float(Atoms[i,6]) - modify_size*10*0.5
+				Atoms[i,6] = str(Atoms[i,6])
+
 	# modify Bonds
 	Bonds = read_data(lammpsdata,"Bonds")
 	# print(Bonds)
