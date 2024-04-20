@@ -1007,12 +1007,19 @@ def lmp2tip4p(lmp,tip4p_lmp,ua=False):
 	# 0. ------> read Header
 	Header = read_data(lmp,"Header")
 	if ua == True:
+		Atoms = str2array(read_data(lmp,"Atoms"))
+		ua_atoms = np.count_nonzero(Atoms[:,2]!="4")
 		Bonds = str2array(read_data(lmp,"Bonds"))
 		ua_nbond = np.count_nonzero(Bonds[:,1]=="1")
 		Angles = str2array(read_data(lmp,"Angles"))
 		ua_nangle = np.count_nonzero(Angles[:,1]=="1")
 		Header = Header.split("\n")
 		for i in range(len(Header)):
+			if "atoms" in Header[i]:
+				Header[i] = Header[i].strip().split()
+				Header[i][0] = str(ua_atoms)
+				Header[i] = " ".join(Header[i])
+				Header[i] = "\t"+Header[i]
 			if "bonds" in Header[i]:
 				Header[i] = Header[i].strip().split()
 				Header[i][0] = str(ua_nbond)
@@ -1021,6 +1028,12 @@ def lmp2tip4p(lmp,tip4p_lmp,ua=False):
 			if "angles" in Header[i]:
 				Header[i] = Header[i].strip().split()
 				Header[i][0] = str(ua_nangle)
+				Header[i] = " ".join(Header[i])
+				Header[i] = "\t"+Header[i]
+				
+			if "atom types" in Header[i]:
+				Header[i] = Header[i].strip().split()
+				Header[i][0] = "3"
 				Header[i] = " ".join(Header[i])
 				Header[i] = "\t"+Header[i]
 			if "bond types" in Header[i]:
