@@ -417,7 +417,7 @@ def modify_pore_size(lammpsdata,modify_data,atomstype=None,modify_size=0,pdbxyz=
 	Header = read_data(lammpsdata,"Header").split("\n")
 	for i in range(len(Header)):
 		# print(Header[i])
-		if "zlo zhi" in Header[i]:
+		if "zlo" in Header[i] or "zhi" in Header[i]:
 			Header[i] = Header[i].split()
 			Header[i][1] = float(Header[i][1])+modify_size*10*0.5
 			Header[i][0] = float(Header[i][0])-modify_size*10*0.5

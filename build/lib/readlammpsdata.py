@@ -154,27 +154,29 @@ def read_box(lmp):
 	"""
 	Header = read_data(lmp, data_sub_str = "Header")
 	try:
-		x = extract_substring(Header,"improper types","xlo xhi").strip().split()
+		x = extract_substring(Header,"improper types","xlo").strip().split()
 	except:
 		try:
-			x = extract_substring(Header,"dihedral types","xlo xhi").strip().split()
+			x = extract_substring(Header,"dihedral types","xlo").strip().split()
 		except:
 			try:
-				x = extract_substring(Header,"angle types","xlo xhi").strip().split()
+				x = extract_substring(Header,"angle types","xlo").strip().split()
 			except:
 				try:
-					x = extract_substring(Header,"bond types","xlo xhi").strip().split()
+					x = extract_substring(Header,"bond types","xlo").strip().split()
 				except:
 					try:
-						x = extract_substring(Header,"bond types","xlo xhi").strip().split()
+						x = extract_substring(Header,"bond types","xlo").strip().split()
 					except:
 						try:
-							x = extract_substring(Header,"types","xlo xhi").strip().split()
+							x = extract_substring(Header,"types","xlo").strip().split()
 						except:
 							print("??? Error: No find 'xlo xhi'!")
 	
-	y = extract_substring(Header,"xlo xhi","ylo yhi").strip().split()
-	z = extract_substring(Header,"ylo yhi","zlo zhi").strip().split()
+	y = extract_substring(Header,"xhi","ylo").strip().split()
+	print(x,y)
+	z = extract_substring(Header,"yhi","zlo").strip().split()
+	print(z)
 	x = list(map(lambda f:float(f), x))
 	y = list(map(lambda f:float(f), y))
 	z = list(map(lambda f:float(f), z))
@@ -415,7 +417,7 @@ def modify_pore_size(lammpsdata,modify_data,atomstype=None,modify_size=0,pdbxyz=
 	Header = read_data(lammpsdata,"Header").split("\n")
 	for i in range(len(Header)):
 		# print(Header[i])
-		if "zlo zhi" in Header[i]:
+		if "zlo" in Header[i] or "zhi" in Header[i]:
 			Header[i] = Header[i].split()
 			Header[i][1] = float(Header[i][1])+modify_size*10*0.5
 			Header[i][0] = float(Header[i][0])-modify_size*10*0.5
@@ -1030,6 +1032,7 @@ def lmp2tip4p(lmp,tip4p_lmp,ua=False):
 				Header[i][0] = str(ua_nangle)
 				Header[i] = " ".join(Header[i])
 				Header[i] = "\t"+Header[i]
+				
 			if "atom types" in Header[i]:
 				Header[i] = Header[i].strip().split()
 				Header[i][0] = "3"
