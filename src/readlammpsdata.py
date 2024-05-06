@@ -154,27 +154,29 @@ def read_box(lmp):
 	"""
 	Header = read_data(lmp, data_sub_str = "Header")
 	try:
-		x = extract_substring(Header,"improper types","xlo xhi").strip().split()
+		x = extract_substring(Header,"improper types","xlo").strip().split()
 	except:
 		try:
-			x = extract_substring(Header,"dihedral types","xlo xhi").strip().split()
+			x = extract_substring(Header,"dihedral types","xlo").strip().split()
 		except:
 			try:
-				x = extract_substring(Header,"angle types","xlo xhi").strip().split()
+				x = extract_substring(Header,"angle types","xlo").strip().split()
 			except:
 				try:
-					x = extract_substring(Header,"bond types","xlo xhi").strip().split()
+					x = extract_substring(Header,"bond types","xlo").strip().split()
 				except:
 					try:
-						x = extract_substring(Header,"bond types","xlo xhi").strip().split()
+						x = extract_substring(Header,"bond types","xlo").strip().split()
 					except:
 						try:
-							x = extract_substring(Header,"types","xlo xhi").strip().split()
+							x = extract_substring(Header,"types","xlo").strip().split()
 						except:
 							print("??? Error: No find 'xlo xhi'!")
 	
-	y = extract_substring(Header,"xlo xhi","ylo yhi").strip().split()
-	z = extract_substring(Header,"ylo yhi","zlo zhi").strip().split()
+	y = extract_substring(Header,"xhi","ylo").strip().split()
+	print(x,y)
+	z = extract_substring(Header,"yhi","zlo").strip().split()
+	print(z)
 	x = list(map(lambda f:float(f), x))
 	y = list(map(lambda f:float(f), y))
 	z = list(map(lambda f:float(f), z))
