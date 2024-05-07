@@ -3,6 +3,7 @@ import numpy as np
 from collections import Counter
 import periodictable as pt
 import time
+import functools
 
 def __version__():
 	"""
@@ -20,7 +21,7 @@ def print_version():
 	return
 
 def print_line(func):
-	
+	@functools.wraps(func)
 	def wrapper(*args, **kwargs):
 		print(21*"-"," Program Start ",21*"-")
 		start_time = time.time()
@@ -174,9 +175,7 @@ def read_box(lmp):
 							print("??? Error: No find 'xlo xhi'!")
 	
 	y = extract_substring(Header,"xhi","ylo").strip().split()
-	print(x,y)
 	z = extract_substring(Header,"yhi","zlo").strip().split()
-	print(z)
 	x = list(map(lambda f:float(f), x))
 	y = list(map(lambda f:float(f), y))
 	z = list(map(lambda f:float(f), z))
@@ -404,20 +403,35 @@ def modify_pos(lmp,pdbxyz):
 	return Atoms
 
 @print_line
-def modify_pore_size(lammpsdata,modify_data,atomstype=None,modify_size=0,pdbxyz=None):
+def modify_pore_size(lmp,relmp,atomstype=None,modify_size=0,pdbxyz=None,direction="z"):
 	"""
 	modify the pore size of lammpsdata
-	lammpsdata: lammps data file name
-	modify_data: rewrite lammps data file name
+	lmp: lammps data file name
+	relmp: rewrite lammps data file name
 	atomstype: type id of atoms need to modify, [4,5,6,7]
 	modify_size: increase or decrease pore size, unit/nm
 	pdbxyz: pdb of xyz file, modify lammpsdata position by pdb or xyz, default None
+	direction: Slit's normal direction, default "z"
 	"""
+	direction = direction.lower()
+	if direction == "x":
+		lo = "xlo"
+		hi = "xhi"
+		index = 4
+	elif direction == "y":
+		lo = "ylo"
+		hi = "yhi"
+		index = 5
+	elif direction == "z":
+		lo = "zlo"
+		hi = "zhi"
+		index = 6
+
 	# modify header
-	Header = read_data(lammpsdata,"Header").split("\n")
+	Header = read_data(lmp,"Header").split("\n")
 	for i in range(len(Header)):
 		# print(Header[i])
-		if "zlo" in Header[i] or "zhi" in Header[i]:
+		if lo in Header[i] or hi in Header[i]:
 			Header[i] = Header[i].split()
 			Header[i][1] = float(Header[i][1])+modify_size*10*0.5
 			Header[i][0] = float(Header[i][0])-modify_size*10*0.5
@@ -426,57 +440,55 @@ def modify_pore_size(lammpsdata,modify_data,atomstype=None,modify_size=0,pdbxyz=
 			Header[i] = " ".join(Header[i])
 			Header[i] = "  "+Header[i]
 
-	Masses = read_data(lammpsdata,"Masses")
-	PairCoeffs = read_data(lammpsdata,"Pair Coeffs")
-	BondCoeffs = read_data(lammpsdata,"Bond Coeffs")
-	AngleCoeffs = read_data(lammpsdata,"Angle Coeffs")
-	DihedralCoeffs = read_data(lammpsdata,"Dihedral Coeffs")
-	ImproperCoeffs = read_data(lammpsdata,"Improper Coeffs")
+	Masses = read_data(lmp,"Masses")
+	PairCoeffs = read_data(lmp,"Pair Coeffs")
+	BondCoeffs = read_data(lmp,"Bond Coeffs")
+	AngleCoeffs = read_data(lmp,"Angle Coeffs")
+	DihedralCoeffs = read_data(lmp,"Dihedral Coeffs")
+	ImproperCoeffs = read_data(lmp,"Improper Coeffs")
 
 	# modify Atoms
-	Lxyz = read_box(lammpsdata)
-	Lx = Lxyz["xhi"]-Lxyz["xlo"]
-	Ly = Lxyz["yhi"]-Lxyz["ylo"]
-	Lz = Lxyz["zhi"]-Lxyz["zlo"]
-	Atoms = read_data(lammpsdata,"Atoms")
+	Lxyz = read_box(lmp)
+	lc = Lxyz[hi]+Lxyz[lo]
+	Atoms = read_data(lmp,"Atoms")
 	Atoms = str2array(Atoms)
 	try:
-		Atoms = modify_pos(lammpsdata,pdbxyz)
+		Atoms = modify_pos(lmp,pdbxyz)
 	except:
 		pass
 	m, n = Atoms.shape
 	if atomstype:
 		for i in range(m):
-			Atoms[i,6] = float(Atoms[i,6])
+			Atoms[i,index] = float(Atoms[i,index])
 			if int(Atoms[i,2]) in atomstype:
-				if float(Atoms[i,6]) > (Lz/2.0):
-					Atoms[i,6] = float(Atoms[i,6]) + modify_size*10*0.5
-					Atoms[i,6] = str(Atoms[i,6])
-				elif float(Atoms[i,6]) <= (Lz/2.0):
-					Atoms[i,6] = float(Atoms[i,6]) - modify_size*10*0.5
-					Atoms[i,6] = str(Atoms[i,6])
+				if float(Atoms[i,index]) > (lc/2.0):
+					Atoms[i,index] = float(Atoms[i,index]) + modify_size*10*0.5
+					Atoms[i,index] = str(Atoms[i,index])
+				elif float(Atoms[i,index]) <= (lc/2.0):
+					Atoms[i,index] = float(Atoms[i,index]) - modify_size*10*0.5
+					Atoms[i,index] = str(Atoms[i,index])
 
 	else:
 		for i in range(m):
-			Atoms[i,6] = float(Atoms[i,6])
-			if float(Atoms[i,6]) > (Lz/2.0):
-				Atoms[i,6] = float(Atoms[i,6]) + modify_size*10*0.5
-				Atoms[i,6] = str(Atoms[i,6])
-			elif float(Atoms[i,6]) <= (Lz/2.0):
-				Atoms[i,6] = float(Atoms[i,6]) - modify_size*10*0.5
-				Atoms[i,6] = str(Atoms[i,6])
+			Atoms[i,index] = float(Atoms[i,index])
+			if float(Atoms[i,index]) > (lc/2.0):
+				Atoms[i,index] = float(Atoms[i,index]) + modify_size*10*0.5
+				Atoms[i,index] = str(Atoms[i,index])
+			elif float(Atoms[i,index]) <= (lc/2.0):
+				Atoms[i,index] = float(Atoms[i,index]) - modify_size*10*0.5
+				Atoms[i,index] = str(Atoms[i,index])
 
 	# modify Bonds
-	Bonds = read_data(lammpsdata,"Bonds")
+	Bonds = read_data(lmp,"Bonds")
 	# print(Bonds)
 	# modify Bonds
-	Angles = read_data(lammpsdata,"Angles")
+	Angles = read_data(lmp,"Angles")
 	# print(Angles)
-	Dihedrals = read_data(lammpsdata,"Dihedrals")
+	Dihedrals = read_data(lmp,"Dihedrals")
 	# print(Dihedrals)
-	Impropers = read_data(lammpsdata,"Impropers")
+	Impropers = read_data(lmp,"Impropers")
 	# print(Impropers)
-	with open(modify_data,"w") as f:
+	with open(relmp,"w") as f:
 		for h in Header:
 			f.write(h+"\n")
 		if Masses:
@@ -1676,7 +1688,7 @@ def cut_lmp_atoms(lmp,relmp,cut_block={"dx":[0,0],"dy":[0,0],"dz":[0,0]}):
 	print(">>> Cut lammps data successfully !")   
 	return
 
-
+@print_line
 def cut_lmp_atoms_etc(lmp,relmp,cut_block={"dx":[0,0],"dy":[0,0],"dz":[0,0]}):
 	"""
 	cut lammps data, including bonds and angles and so on
@@ -2490,7 +2502,13 @@ def read_total_mass(lmp):
 
 	return total_mass
 
+@print_line
 def read_atomic_number(lmp):
+	"""
+	read atomic number from lammpsdata
+	Parameters:
+	- lmp: lammps data
+	"""
 	atom_dict = {}
 	Atoms = str2array(read_data(lmp, "Atoms"))
 	Atomtypes = Atoms[:,2]
@@ -2508,6 +2526,6 @@ if __name__ == '__main__':
 	# msi2clayff("sio2_1nm.data","sio2_1nm_clayff.data")
 	# Atoms = read_data(lmp="PVP.lmp", data_sub_str = "Atoms")
 	read_atomic_number(lmp="PVP.lmp")
-	# print(Atoms)
+	print(help(read_atomic_number))
 
 
