@@ -1220,7 +1220,7 @@ def array2str(array):
 			row = [str(i) for i in row]
 		except:
 			row = str(row)
-		string += "  ".join(row)+"\n"
+		string += "\t".join(row)+"\n"
 	string = "\n\n"+string+"\n"
 	print(">>> Convert a array to a string for writing successfully !")
 	return string
@@ -1624,7 +1624,7 @@ def unique_list(my_list):
 @print_line
 def cut_lmp_atoms(lmp,relmp,cut_block={"dx":[0,0],"dy":[0,0],"dz":[0,0]}):
 	"""
-	cut lammps data
+	cut lammps data, only atoms
 	lmp: original lammps data
 	relmp: rewrite lammps data
 	cut_block: {"dx":[0,0],
@@ -1675,6 +1675,227 @@ def cut_lmp_atoms(lmp,relmp,cut_block={"dx":[0,0],"dy":[0,0],"dz":[0,0]}):
 	f.close()
 	print(">>> Cut lammps data successfully !")   
 	return
+
+
+def cut_lmp_atoms_etc(lmp,relmp,cut_block={"dx":[0,0],"dy":[0,0],"dz":[0,0]}):
+	"""
+	cut lammps data, including bonds and angles and so on
+	lmp: original lammps data
+	relmp: rewrite lammps data
+	cut_block: {"dx":[0,0],
+				"dy":[0,0],
+				"dz":[0,0]
+				} / angstrom
+	"""
+	terms = read_terms(lmp)
+	Header = read_data(lmp,"Header")
+	Atoms =  str2array(read_data(lmp,"Atoms"))
+	m,n = Atoms.shape
+	Atoms = Atoms.tolist()
+	Atoms_save = []
+	x_start = cut_block["dx"][0]
+	x_stop  = cut_block["dx"][1]
+	y_start = cut_block["dy"][0]
+	y_stop  = cut_block["dy"][1]
+	z_start = cut_block["dz"][0]
+	z_stop  = cut_block["dz"][1]
+
+	for i in range(m):
+		if float(Atoms[i][4]) <= x_start or float(Atoms[i][4]) >= x_stop:
+			Atoms_save.append(Atoms[i])
+		if float(Atoms[i][5]) <= y_start or float(Atoms[i][5]) >= y_stop:
+			Atoms_save.append(Atoms[i])
+		if float(Atoms[i][6]) <= z_start or float(Atoms[i][6]) >= z_stop:
+			Atoms_save.append(Atoms[i])
+	
+	Atoms_save = unique_list(Atoms_save)
+	# print(Atoms_save)
+	Atoms_save = np.array(Atoms_save)
+	natoms = len(Atoms_save)
+	save_atomids = Atoms_save[:,0]
+	save_atomtypes = np.unique(Atoms_save[:,2])
+	print(f">>> Saved Atom types: {save_atomtypes}")
+	for i in range(natoms):
+		Atoms_save[i,0] = str(i+1)
+	new_atomids= Atoms_save[:,0]
+
+	Masses = read_data(lmp,"Masses")
+	Masses = str2array(Masses)
+	maskm = np.isin(Masses[:,0],save_atomtypes)
+	Masses = Masses[maskm]
+	for i in range(len(Masses)):
+		Masses[i,0] = str(i+1)
+	new_atomtypes = Masses[:,0]
+	print(f">>> Newest Atom types: {new_atomtypes}")
+	Massesstr = array2str(Masses)
+
+	PairCoeff = read_data(lmp,"Pair Coeffs")
+	PairCoeff = str2array(PairCoeff)
+	maskpc = np.isin(PairCoeff[:,0],save_atomtypes)
+	PairCoeff = PairCoeff[maskpc]
+	PairCoeff[:,0] = new_atomtypes
+	PairCoeffstr = array2str(PairCoeff)
+
+	# update atom type
+	for i, elem in enumerate(save_atomtypes):
+		mask1 = (Atoms_save[:,2] == elem)
+		Atoms_save[mask1, 2] = new_atomtypes[i]
+	Atomsstr = array2str(Atoms_save)
+
+	# --------------------------- Bonds ------------------------
+	Bonds = str2array(read_data(lmp,"Bonds"))
+	maskbond2 = np.isin(Bonds[:,2],save_atomids)
+	maskbond3 = np.isin(Bonds[:,3],save_atomids)
+	save_bonds = Bonds[maskbond2 | maskbond3]
+	for i in range(len(save_bonds)):
+		save_bonds[i,0] = str(i+1)
+	save_bondtypes = np.unique(save_bonds[:,1])
+	print(f">>> Saved Bond types: {save_bondtypes}")
+	BondCoeff = read_data(lmp,"Bond Coeffs")
+	BondCoeff = str2array(BondCoeff)
+	mask = np.isin(BondCoeff[:,0],save_bondtypes)
+	newBondCoeff = BondCoeff[mask]
+	for i in range(len(newBondCoeff)):
+		newBondCoeff[i,0] = str(i+1)
+	new_bondtypes = newBondCoeff[:,0]
+	print(f">>> Newest Bond types: {new_bondtypes}")
+	# update bond type
+	for i, elem in enumerate(save_bondtypes):
+		maskbond = (save_bonds[:,1] == elem)
+		save_bonds[maskbond, 1] = new_bondtypes[i]
+	# update bonds 
+	for i, elem in enumerate(save_atomids):
+		maskbond1 = (save_bonds[:,2] == elem)
+		save_bonds[maskbond1, 2] = new_atomids[i]
+		maskbond2 = (save_bonds[:,3] == elem)
+		save_bonds[maskbond2, 3] = new_atomids[i]
+	new_bonds = save_bonds
+	Bondsstr = array2str(new_bonds)
+	BondCoeffstr = array2str(newBondCoeff)
+
+	# --------------------------- Angles ------------------------
+	Angles = str2array(read_data(lmp,"Angles"))
+	mask2 = np.isin(Angles[:,2],save_atomids)
+	mask3 = np.isin(Angles[:,3],save_atomids)
+	mask4 = np.isin(Angles[:,4],save_atomids)
+	save_angles = Angles[mask2 | mask3 | mask4]
+	for i in range(len(save_angles)):
+		save_angles[i,0] = str(i+1)
+	save_angletypes = np.unique(save_angles[:,1])
+	print(f">>> Saved Angle types: {save_angletypes}")
+
+	AngleCoeff = read_data(lmp,"Angle Coeffs")
+	AngleCoeff = str2array(AngleCoeff)
+	mask = np.isin(AngleCoeff[:,0],save_angletypes)
+	newAngleCoeff = AngleCoeff[mask]
+	for i in range(len(newAngleCoeff)):
+		newAngleCoeff[i,0] = str(i+1)
+	new_angletypes = newAngleCoeff[:,0]
+	print(f">>> Newest Angle types: {new_angletypes}")
+
+	# update angle type
+	for i, elem in enumerate(save_angletypes):
+		maskangle = (save_angles[:,1] == elem)
+		save_angles[maskangle, 1] = new_angletypes[i]
+	# update angles 
+	for i, elem in enumerate(save_atomids):
+		maskangle1 = (save_angles[:,2] == elem)
+		save_angles[maskangle1, 2] = new_atomids[i]
+		maskangle2 = (save_angles[:,3] == elem)
+		save_angles[maskangle2, 3] = new_atomids[i]
+		maskangle3 = (save_angles[:,4] == elem)
+		save_angles[maskangle3, 4] = new_atomids[i]
+	new_angles = save_angles
+	Anglesstr = array2str(new_angles)
+	AngleCoeffstr = array2str(newAngleCoeff)
+
+	# --------------------------- Dihedrals ------------------------
+	Dihedrals = str2array(read_data(lmp,"Dihedrals"))
+	mask2 = np.isin(Dihedrals[:,2],save_atomids)
+	mask3 = np.isin(Dihedrals[:,3],save_atomids)
+	mask4 = np.isin(Dihedrals[:,4],save_atomids)
+	mask5 = np.isin(Dihedrals[:,5],save_atomids)
+	save_dihedrals = Dihedrals[mask2 | mask3 | mask4 | mask5]
+	for i in range(len(save_dihedrals)):
+		save_dihedrals[i,0] = str(i+1)
+	save_dihedraltypes = np.unique(save_dihedrals[:,1])
+	print(f">>> Saved Dihedrals types: {save_dihedraltypes}")
+
+	DihedralCoeff = read_data(lmp,"Dihedral Coeffs")
+	DihedralCoeff = str2array(DihedralCoeff)
+	mask = np.isin(DihedralCoeff[:,0],save_dihedraltypes)
+	newDihedralCoeff = DihedralCoeff[mask]
+
+	for i in range(len(newDihedralCoeff)):
+		newDihedralCoeff[i,0] = str(i+1)
+	new_dihedraltypes = newDihedralCoeff[:,0]
+	print(f">>> Newest Dihedrals types: {new_dihedraltypes}")
+
+	# update angle type
+	for i, elem in enumerate(save_dihedraltypes):
+		maskdihe = (save_dihedrals[:,1] == elem)
+		save_dihedrals[maskdihe, 1] = save_dihedraltypes[i]
+	# update angles 
+	for i, elem in enumerate(save_atomids):
+		maskdihe1 = (save_dihedrals[:,2] == elem)
+		save_dihedrals[maskdihe1, 2] = new_atomids[i]
+		maskdihe2 = (save_dihedrals[:,3] == elem)
+		save_dihedrals[maskdihe2, 3] = new_atomids[i]
+		maskdihe3 = (save_dihedrals[:,4] == elem)
+		save_dihedrals[maskdihe3, 4] = new_atomids[i]
+		maskdihe4 = (save_dihedrals[:,5] == elem)
+		save_dihedrals[maskdihe4, 5] = new_atomids[i]
+	new_dihedrals = save_dihedrals
+	Dihedralsstr = array2str(new_dihedrals)
+	DihedralCoeffstr = array2str(newDihedralCoeff)
+	# --------------------------- Save lmp ------------------------
+	f = open(relmp,"w")
+	Header = modify_header(Header,"atoms",natoms)
+	Header = modify_header(Header,"atom types",len(new_atomtypes))
+	Header = modify_header(Header,"bonds",len(new_bonds))
+	Header = modify_header(Header,"bond types",len(new_bondtypes))
+	Header = modify_header(Header,"angles",len(new_angles))
+	Header = modify_header(Header,"angle types",len(new_angletypes))
+	Header = modify_header(Header,"dihedrals",len(new_dihedrals))
+	Header = modify_header(Header,"dihedral types",len(new_dihedraltypes))
+
+	f.write(Header)
+	for term in terms:
+		term_info = read_data(lmp,term)
+		if "Atoms" in term:
+			f.write(term)
+			f.write(Atomsstr)
+		elif "Masses" in term:
+			f.write(term)
+			f.write(Massesstr)
+		elif "Pair Coeffs" in term:
+			f.write(term)
+			f.write(PairCoeffstr)
+		elif "Bonds" in term:
+			f.write(term)
+			f.write(Bondsstr)
+		elif "Bond Coeffs" in term:
+			f.write(term)
+			f.write(BondCoeffstr)
+		elif "Angles" in term:
+			f.write(term)
+			f.write(Anglesstr)
+		elif "Angle Coeffs" in term:
+			f.write(term)
+			f.write(AngleCoeffstr)
+		elif "Dihedrals" in term:
+			f.write(term)
+			f.write(Dihedralsstr)
+		elif "Dihedral Coeffs" in term:
+			f.write(term)
+			f.write(DihedralCoeffstr)
+		else:
+			f.write(term)
+			f.write(term_info)
+	f.close()
+	print(">>> Cut lammps data successfully !")   
+	return
+
 
 
 @print_line
