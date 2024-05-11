@@ -1451,6 +1451,52 @@ def move_boundary(lmp,relmp,distance,direction="y"):
 	return
 
 @print_line
+def move_pos(lmp,relmp,distance,atomtypes=[1,2],direction="y"):
+	"""
+	move position atoms in lammps data
+	lmp: original lammps data
+	relmp: rewrite lammps data
+	distance: distance moved, unit/A
+	atomtypes: a list of atom types
+	direction: direction, default direction = "y"
+	"""
+	direction = direction.lower()
+	if direction == "x":
+		lo_label, hi_label = "xlo", "xhi"
+		index = 4
+	elif direction == "y":
+		lo_label, hi_label = "ylo", "yhi"
+		index = 5
+	elif direction == "z":
+		lo_label, hi_label = "zlo", "zhi"
+		index = 6
+	else:
+		print("??? Error! Not",direction,"direction! Please check your direction arg !")
+	terms = read_terms(lmp)
+	Header = read_data(lmp,"Header")
+	Atoms_info = read_data(lmp,"Atoms")
+	Atoms = str2array(Atoms_info)#[:,:7]
+	m,n = Atoms.shape
+	for i in range(m):
+		if int(Atoms[i][2]) in atomtypes:
+			Atoms[i][index] = float(Atoms[i][index])+distance
+		
+		Atoms[i][index] = str(float(Atoms[i][index]))
+
+	Atoms_str = array2str(Atoms)
+	f = open(relmp,"w")
+	f.write(Header)
+	for term in terms:
+		term_info = read_data(lmp,term)
+		if "Atoms" in term:
+			term_info = Atoms_str
+		f.write(term)
+		f.write(term_info)
+	f.close()
+	print(">>> Move atoms in lammps data successfully !")   
+	return
+
+@print_line
 def density(lmp,atom_type,density_type="mass",direction="y",nbin=50):
 	"""
 	calculating density from lammps data, return a array, x = array[:,0], density = array[:,1]
@@ -1703,6 +1749,7 @@ def cut_lmp_atoms_etc(lmp,relmp,cut_block={"dx":[0,0],"dy":[0,0],"dz":[0,0]}):
 	terms = read_terms(lmp)
 	Header = read_data(lmp,"Header")
 	Atoms =  str2array(read_data(lmp,"Atoms"))
+
 	m,n = Atoms.shape
 	Atoms = Atoms.tolist()
 	Atoms_save = []
@@ -1720,10 +1767,11 @@ def cut_lmp_atoms_etc(lmp,relmp,cut_block={"dx":[0,0],"dy":[0,0],"dz":[0,0]}):
 			Atoms_save.append(Atoms[i])
 		if float(Atoms[i][6]) <= z_start or float(Atoms[i][6]) >= z_stop:
 			Atoms_save.append(Atoms[i])
-	
 	Atoms_save = unique_list(Atoms_save)
 	# print(Atoms_save)
 	Atoms_save = np.array(Atoms_save)
+	Atoms_save = Atoms_save[Atoms_save[:,0].astype(int).argsort()]
+	
 	natoms = len(Atoms_save)
 	save_atomids = Atoms_save[:,0]
 	save_atomtypes = np.unique(Atoms_save[:,2])
@@ -1760,6 +1808,7 @@ def cut_lmp_atoms_etc(lmp,relmp,cut_block={"dx":[0,0],"dy":[0,0],"dz":[0,0]}):
 	maskbond2 = np.isin(Bonds[:,2],save_atomids)
 	maskbond3 = np.isin(Bonds[:,3],save_atomids)
 	save_bonds = Bonds[maskbond2 | maskbond3]
+	print()
 	for i in range(len(save_bonds)):
 		save_bonds[i,0] = str(i+1)
 	save_bondtypes = np.unique(save_bonds[:,1])
