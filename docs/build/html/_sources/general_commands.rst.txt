@@ -7,9 +7,10 @@ Welcome to readlammpsdata's documentation!
 ==========================================
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
    :caption: Contents:
 	
-   quick_start
-   usages
-   examples
+	general_commands/array2str
+	general_commands/cut_lmp
+	general_commands/cut_lmp_atoms_etc
+	general_commands/periodic2interface
