@@ -24,16 +24,16 @@
 |      |      |      |      |               |
 |      |      |      |      |               |
 
-| M                | N    | O    | P             | Q    |
-| ---------------- | ---- | ---- | ------------- | ---- |
-| msi2clayff       |      |      | pdb2xyz       |      |
-| msi2clayff_OH    |      |      | print_version |      |
-| modify_header    |      |      | print_line    |      |
-| modify_pos       |      |      |               |      |
-| modify_pore_size |      |      |               |      |
-| move_boundary    |      |      |               |      |
-|                  |      |      |               |      |
-|                  |      |      |               |      |
+| M                | N    | O    | P                                                            | Q    |
+| ---------------- | ---- | ---- | ------------------------------------------------------------ | ---- |
+| msi2clayff       |      |      | pdb2xyz                                                      |      |
+| msi2clayff_OH    |      |      | print_version                                                |      |
+| modify_header    |      |      | print_line                                                   |      |
+| modify_pos       |      |      | [periodic2interface](./general_commands/periodic2interface.html) |      |
+| modify_pore_size |      |      |                                                              |      |
+| move_boundary    |      |      |                                                              |      |
+|                  |      |      |                                                              |      |
+|                  |      |      |                                                              |      |
 
 | R                 | S                                              | T    | U    | V    |
 | ----------------- | ---------------------------------------------- | ---- | ---- | ---- |

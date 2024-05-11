@@ -4,6 +4,7 @@ from collections import Counter
 import periodictable as pt
 import time
 import functools
+from itertools import groupby,chain
 
 def __version__():
 	"""
@@ -2516,6 +2517,73 @@ def read_atomic_number(lmp):
 	atom_dict = dict(ntypes)
 	print(f">>> Read atomic number successfully !")
 	return atom_dict
+
+
+def find_numbers_with_large_difference(group,index,l):
+	n = len(group)
+	first = float(group[0][index])
+	for i in range(1,n):
+		if (float(group[i][index]) - first) > l/2.0:
+			group[i][index] = str("{:e}".format(float(group[i][index])-l))
+		elif (float(group[i][index]) - first) < -l/2.0:
+			group[i][index] = str("{:e}".format(float(group[i][index])+l))
+	return group
+
+@print_line
+def periodic2interface(lmp,relmp,direction="z",vacuum=10):
+	"""
+	change lmp with periodic boundary to lmp with interface
+	Parameters:
+	- lmp: lammps data with bonds and angles across periodic boundary 
+	- relmp: lammps data with interface
+	- direction: normal direction of interface, default z
+	- vacuum: add a vacuum, unit/Angstrom
+	"""
+	direction = direction.lower()
+	if direction == "x":
+		index = 4
+		lo = "xlo"
+		hi = "xhi"
+	elif direction == "y":
+		index = 5
+		lo = "ylo"
+		hi = "yhi"
+	elif direction == "z":
+		index = 6
+		lo = "zlo"
+		hi = "zhi"
+	
+	Box = read_box(lmp)
+	ll = float(Box[hi])-float(Box[lo])
+	Atoms = read_data(lmp,"Atoms")
+	Atoms = str2array(Atoms)
+	Atoms = Atoms[Atoms[:,0].astype(int).argsort()]
+	m, _ = Atoms.shape
+	groups = []
+	for key, group in groupby(Atoms.tolist(), key=lambda x: x[1]):
+		groups.append(list(group))
+	Atoms_final = []
+	for group in groups:
+		# print(group)
+		group = find_numbers_with_large_difference(group,index,ll)
+		Atoms_final.append(group)
+	Atoms_final = list(chain.from_iterable(Atoms_final))
+	Atoms_final = np.array(Atoms_final)
+	Atoms_final = array2str(Atoms_final)
+	terms = read_terms(lmp)
+	f = open(relmp,"w")
+	header = read_data(lmp,"Header")
+	header = modify_header(header,hterm=f"{lo} {hi}",value=[Box[lo]-vacuum,Box[hi]+vacuum])
+	f.write(header)
+	for term in terms:
+		if "Atoms" in term:
+			terminfo = Atoms_final
+		else:
+			terminfo = read_data(lmp,term)
+		f.write(term)
+		f.write(terminfo)
+	print(">>> Write lmp with interface successfully!")
+	return
 
 
 
