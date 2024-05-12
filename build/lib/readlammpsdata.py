@@ -5,6 +5,7 @@ import periodictable as pt
 import time
 import functools
 from itertools import groupby,chain
+from tqdm import tqdm
 
 def __version__():
 	"""
@@ -1749,9 +1750,8 @@ def cut_lmp_atoms_etc(lmp,relmp,cut_block={"dx":[0,0],"dy":[0,0],"dz":[0,0]}):
 	terms = read_terms(lmp)
 	Header = read_data(lmp,"Header")
 	Atoms =  str2array(read_data(lmp,"Atoms"))
-
+	Atoms = Atoms[Atoms[:,0].astype(int).argsort()]
 	m,n = Atoms.shape
-	Atoms = Atoms.tolist()
 	Atoms_save = []
 	x_start = cut_block["dx"][0]
 	x_stop  = cut_block["dx"][1]
@@ -1759,35 +1759,40 @@ def cut_lmp_atoms_etc(lmp,relmp,cut_block={"dx":[0,0],"dy":[0,0],"dz":[0,0]}):
 	y_stop  = cut_block["dy"][1]
 	z_start = cut_block["dz"][0]
 	z_stop  = cut_block["dz"][1]
+	groups = []
+	for key, group in groupby(Atoms.tolist(), key=lambda x: x[1]):
+		groups.append(list(group))
+	Atoms_save = []
+	for group in tqdm(groups,desc="Cut Block: "):
+		na = len(group)
+		group_new = []
+		for atom in group:
+			if float(atom[4]) <= x_start or float(atom[4]) >= x_stop \
+			or float(atom[5]) <= y_start or float(atom[5]) >= y_stop \
+			or float(atom[6]) <= z_start or float(atom[6]) >= z_stop:
+				group_new.append(atom)
 
-	for i in range(m):
-		if float(Atoms[i][4]) <= x_start or float(Atoms[i][4]) >= x_stop:
-			Atoms_save.append(Atoms[i])
-		if float(Atoms[i][5]) <= y_start or float(Atoms[i][5]) >= y_stop:
-			Atoms_save.append(Atoms[i])
-		if float(Atoms[i][6]) <= z_start or float(Atoms[i][6]) >= z_stop:
-			Atoms_save.append(Atoms[i])
-	Atoms_save = unique_list(Atoms_save)
-	# print(Atoms_save)
+		if len(group_new)==na:
+			Atoms_save.append(group_new)
+	Atoms_save = list(chain.from_iterable(Atoms_save))
 	Atoms_save = np.array(Atoms_save)
-	Atoms_save = Atoms_save[Atoms_save[:,0].astype(int).argsort()]
-	
 	natoms = len(Atoms_save)
-	save_atomids = Atoms_save[:,0]
-	save_atomtypes = np.unique(Atoms_save[:,2])
-	print(f">>> Saved Atom types: {save_atomtypes}")
-	for i in range(natoms):
+	save_atomids = Atoms_save[:,0].tolist()
+	save_atomtypes = sorted(np.unique(Atoms_save[:,2]).astype(int))
+	print(f">>> Number of Saved Atom types: {len(save_atomtypes)}")
+	for i in tqdm(range(natoms),desc="Atoms: "):
 		Atoms_save[i,0] = str(i+1)
 	new_atomids= Atoms_save[:,0]
-
+	
 	Masses = read_data(lmp,"Masses")
 	Masses = str2array(Masses)
-	maskm = np.isin(Masses[:,0],save_atomtypes)
+	maskm = np.isin(Masses[:,0].astype(int),save_atomtypes)
 	Masses = Masses[maskm]
-	for i in range(len(Masses)):
+
+	for i in tqdm(range(len(Masses)),desc="Masses: "):
 		Masses[i,0] = str(i+1)
-	new_atomtypes = Masses[:,0]
-	print(f">>> Newest Atom types: {new_atomtypes}")
+	new_atomtypes = Masses[:,0].tolist()
+	print(f">>> Number of Newest Atom types: {len(new_atomtypes)}")
 	Massesstr = array2str(Masses)
 
 	PairCoeff = read_data(lmp,"Pair Coeffs")
@@ -1799,20 +1804,31 @@ def cut_lmp_atoms_etc(lmp,relmp,cut_block={"dx":[0,0],"dy":[0,0],"dz":[0,0]}):
 
 	# update atom type
 	for i, elem in enumerate(save_atomtypes):
-		mask1 = (Atoms_save[:,2] == elem)
+		mask1 = (Atoms_save[:,2].astype(int) == int(elem))
 		Atoms_save[mask1, 2] = new_atomtypes[i]
 	Atomsstr = array2str(Atoms_save)
 
+	# # --------------------------- Velocities ------------------------
+	# if "Velocities" in terms:
+	# 	Velocities = str2array(read_data(lmp,"Velocities"))
+	# 	maskv0 = np.isin(Velocities[:,0],save_atomids)
+	# 	save_vels = Velocities[maskv0]
+	# 	for i, elem in enumerate(tqdm(save_atomids),desc="Velocities: "):
+	# 		maskv = (save_vels[:,0].astype(int) == int(elem))
+	# 		save_vels[maskv, 0] = new_atomids[i]
+	# 	new_Velocities = save_vels
+	# 	Velocitiesstr = array2str(new_Velocities)
+
 	# --------------------------- Bonds ------------------------
 	Bonds = str2array(read_data(lmp,"Bonds"))
+	Bonds = Bonds[Bonds[:,0].astype(int).argsort()]
 	maskbond2 = np.isin(Bonds[:,2],save_atomids)
 	maskbond3 = np.isin(Bonds[:,3],save_atomids)
 	save_bonds = Bonds[maskbond2 | maskbond3]
-	print()
-	for i in range(len(save_bonds)):
+	for i in tqdm(range(len(save_bonds)),desc="Save Bonds: "):
 		save_bonds[i,0] = str(i+1)
-	save_bondtypes = np.unique(save_bonds[:,1])
-	print(f">>> Saved Bond types: {save_bondtypes}")
+	save_bondtypes = np.unique(save_bonds[:,1]).astype(int)
+	print(f">>> Number of Saved Bond types: {len(save_bondtypes)}")
 	BondCoeff = read_data(lmp,"Bond Coeffs")
 	BondCoeff = str2array(BondCoeff)
 	mask = np.isin(BondCoeff[:,0],save_bondtypes)
@@ -1820,12 +1836,12 @@ def cut_lmp_atoms_etc(lmp,relmp,cut_block={"dx":[0,0],"dy":[0,0],"dz":[0,0]}):
 	for i in range(len(newBondCoeff)):
 		newBondCoeff[i,0] = str(i+1)
 	new_bondtypes = newBondCoeff[:,0]
-	print(f">>> Newest Bond types: {new_bondtypes}")
+	print(f">>> Number of Newest Bond types: {len(new_bondtypes)}")
 	# update bond type
 	for i, elem in enumerate(save_bondtypes):
-		maskbond = (save_bonds[:,1] == elem)
+		maskbond = (save_bonds[:,1].astype(int) == int(elem))
 		save_bonds[maskbond, 1] = new_bondtypes[i]
-	# update bonds 
+	# # update bonds 
 	for i, elem in enumerate(save_atomids):
 		maskbond1 = (save_bonds[:,2] == elem)
 		save_bonds[maskbond1, 2] = new_atomids[i]
@@ -1837,14 +1853,15 @@ def cut_lmp_atoms_etc(lmp,relmp,cut_block={"dx":[0,0],"dy":[0,0],"dz":[0,0]}):
 
 	# --------------------------- Angles ------------------------
 	Angles = str2array(read_data(lmp,"Angles"))
+	Angles = Angles[Angles[:,0].astype(int).argsort()]
 	mask2 = np.isin(Angles[:,2],save_atomids)
 	mask3 = np.isin(Angles[:,3],save_atomids)
 	mask4 = np.isin(Angles[:,4],save_atomids)
 	save_angles = Angles[mask2 | mask3 | mask4]
-	for i in range(len(save_angles)):
+	for i in tqdm(range(len(save_angles)),desc="Save Angles: "):
 		save_angles[i,0] = str(i+1)
-	save_angletypes = np.unique(save_angles[:,1])
-	print(f">>> Saved Angle types: {save_angletypes}")
+	save_angletypes = np.unique(save_angles[:,1]).astype(int)
+	print(f">>> Number of Saved Angle types: {len(save_angletypes)}")
 
 	AngleCoeff = read_data(lmp,"Angle Coeffs")
 	AngleCoeff = str2array(AngleCoeff)
@@ -1853,11 +1870,11 @@ def cut_lmp_atoms_etc(lmp,relmp,cut_block={"dx":[0,0],"dy":[0,0],"dz":[0,0]}):
 	for i in range(len(newAngleCoeff)):
 		newAngleCoeff[i,0] = str(i+1)
 	new_angletypes = newAngleCoeff[:,0]
-	print(f">>> Newest Angle types: {new_angletypes}")
+	print(f">>> Number of Newest Angle types: {len(new_angletypes)}")
 
 	# update angle type
 	for i, elem in enumerate(save_angletypes):
-		maskangle = (save_angles[:,1] == elem)
+		maskangle = (save_angles[:,1].astype(int) == int(elem))
 		save_angles[maskangle, 1] = new_angletypes[i]
 	# update angles 
 	for i, elem in enumerate(save_atomids):
@@ -1873,15 +1890,16 @@ def cut_lmp_atoms_etc(lmp,relmp,cut_block={"dx":[0,0],"dy":[0,0],"dz":[0,0]}):
 
 	# --------------------------- Dihedrals ------------------------
 	Dihedrals = str2array(read_data(lmp,"Dihedrals"))
+	Dihedrals = Dihedrals[Dihedrals[:,0].astype(int).argsort()]
 	mask2 = np.isin(Dihedrals[:,2],save_atomids)
 	mask3 = np.isin(Dihedrals[:,3],save_atomids)
 	mask4 = np.isin(Dihedrals[:,4],save_atomids)
 	mask5 = np.isin(Dihedrals[:,5],save_atomids)
 	save_dihedrals = Dihedrals[mask2 | mask3 | mask4 | mask5]
-	for i in range(len(save_dihedrals)):
+	for i in tqdm(range(len(save_dihedrals)),desc="Save Dihedrals: "):
 		save_dihedrals[i,0] = str(i+1)
-	save_dihedraltypes = np.unique(save_dihedrals[:,1])
-	print(f">>> Saved Dihedrals types: {save_dihedraltypes}")
+	save_dihedraltypes = np.unique(save_dihedrals[:,1]).astype(int)
+	print(f">>> Number of Saved Dihedrals types: {len(save_dihedraltypes)}")
 
 	DihedralCoeff = read_data(lmp,"Dihedral Coeffs")
 	DihedralCoeff = str2array(DihedralCoeff)
@@ -1891,11 +1909,11 @@ def cut_lmp_atoms_etc(lmp,relmp,cut_block={"dx":[0,0],"dy":[0,0],"dz":[0,0]}):
 	for i in range(len(newDihedralCoeff)):
 		newDihedralCoeff[i,0] = str(i+1)
 	new_dihedraltypes = newDihedralCoeff[:,0]
-	print(f">>> Newest Dihedrals types: {new_dihedraltypes}")
+	print(f">>> Number of Newest Dihedrals types: {len(new_dihedraltypes)}")
 
 	# update angle type
 	for i, elem in enumerate(save_dihedraltypes):
-		maskdihe = (save_dihedrals[:,1] == elem)
+		maskdihe = (save_dihedrals[:,1].astype(int) == int(elem))
 		save_dihedrals[maskdihe, 1] = save_dihedraltypes[i]
 	# update angles 
 	for i, elem in enumerate(save_atomids):
@@ -1910,17 +1928,73 @@ def cut_lmp_atoms_etc(lmp,relmp,cut_block={"dx":[0,0],"dy":[0,0],"dz":[0,0]}):
 	new_dihedrals = save_dihedrals
 	Dihedralsstr = array2str(new_dihedrals)
 	DihedralCoeffstr = array2str(newDihedralCoeff)
+
+
+	# --------------------------- Impropers ------------------------
+	Impropers = str2array(read_data(lmp,"Impropers"))
+	Impropers = Impropers[Impropers[:,0].astype(int).argsort()]
+	maskI2 = np.isin(Impropers[:,2],save_atomids)
+	maskI3 = np.isin(Impropers[:,3],save_atomids)
+	maskI4 = np.isin(Impropers[:,4],save_atomids)
+	maskI5 = np.isin(Impropers[:,5],save_atomids)
+	save_impropers = Impropers[maskI2 | maskI3 | maskI4 | maskI5]
+	for i in tqdm(range(len(save_impropers)),desc="Save Impropers: "):
+		save_impropers[i,0] = str(i+1)
+	save_impropertypes = np.unique(save_impropers[:,1]).astype(int)
+	print(f">>> Number of Saved Impropers types: {len(save_impropertypes)}")
+
+	ImproperCoeff = read_data(lmp,"Improper Coeffs")
+	ImproperCoeff = str2array(ImproperCoeff)
+	mask = np.isin(ImproperCoeff[:,0],save_impropertypes)
+	newImproperCoeff = ImproperCoeff[mask]
+
+	for i in range(len(newImproperCoeff)):
+		newImproperCoeff[i,0] = str(i+1)
+	new_impropertypes = newImproperCoeff[:,0]
+	print(f">>> Number of Newest Impropers types: {len(new_impropertypes)}")
+
+	# update angle type
+	for i, elem in enumerate(save_impropertypes):
+		maskimpr = (save_impropers[:,1].astype(int) == int(elem))
+		save_impropers[maskimpr, 1] = save_impropertypes[i]
+	# update angles 
+	for i, elem in enumerate(save_atomids):
+		maskimpr1 = (save_impropers[:,2] == elem)
+		save_impropers[maskimpr1, 2] = new_atomids[i]
+		maskimpr2 = (save_impropers[:,3] == elem)
+		save_impropers[maskimpr2, 3] = new_atomids[i]
+		maskimpr3 = (save_impropers[:,4] == elem)
+		save_impropers[maskimpr3, 4] = new_atomids[i]
+		maskimpr4 = (save_impropers[:,5] == elem)
+		save_impropers[maskimpr4, 5] = new_atomids[i]
+	new_impropers = save_impropers
+	Impropersstr = array2str(new_impropers)
+	ImproperCoeffstr = array2str(newImproperCoeff)
+
 	# --------------------------- Save lmp ------------------------
 	f = open(relmp,"w")
 	Header = modify_header(Header,"atoms",natoms)
 	Header = modify_header(Header,"atom types",len(new_atomtypes))
-	Header = modify_header(Header,"bonds",len(new_bonds))
-	Header = modify_header(Header,"bond types",len(new_bondtypes))
-	Header = modify_header(Header,"angles",len(new_angles))
-	Header = modify_header(Header,"angle types",len(new_angletypes))
-	Header = modify_header(Header,"dihedrals",len(new_dihedrals))
-	Header = modify_header(Header,"dihedral types",len(new_dihedraltypes))
-
+	try:
+		Header = modify_header(Header,"bonds",len(new_bonds))
+		Header = modify_header(Header,"bond types",len(new_bondtypes))
+	except:
+		pass
+	try:
+		Header = modify_header(Header,"angles",len(new_angles))
+		Header = modify_header(Header,"angle types",len(new_angletypes))
+	except:
+		pass
+	try:
+		Header = modify_header(Header,"dihedrals",len(new_dihedrals))
+		Header = modify_header(Header,"dihedral types",len(new_dihedraltypes))
+	except:
+		pass
+	try:
+		Header = modify_header(Header,"impropers",len(new_impropers))
+		Header = modify_header(Header,"improper types",len(new_impropertypes))
+	except:
+		pass
 	f.write(Header)
 	for term in terms:
 		term_info = read_data(lmp,term)
@@ -1933,6 +2007,10 @@ def cut_lmp_atoms_etc(lmp,relmp,cut_block={"dx":[0,0],"dy":[0,0],"dz":[0,0]}):
 		elif "Pair Coeffs" in term:
 			f.write(term)
 			f.write(PairCoeffstr)
+		elif "Velocities" in term:
+			pass
+			# f.write(term)
+			# f.write(Velocitiesstr)
 		elif "Bonds" in term:
 			f.write(term)
 			f.write(Bondsstr)
@@ -1951,6 +2029,12 @@ def cut_lmp_atoms_etc(lmp,relmp,cut_block={"dx":[0,0],"dy":[0,0],"dz":[0,0]}):
 		elif "Dihedral Coeffs" in term:
 			f.write(term)
 			f.write(DihedralCoeffstr)
+		elif "Impropers" in term:
+			f.write(term)
+			f.write(Impropersstr)
+		elif "Improper Coeffs" in term:
+			f.write(term)
+			f.write(ImproperCoeffstr)
 		else:
 			f.write(term)
 			f.write(term_info)
