@@ -2192,6 +2192,7 @@ def change_type_order(lmp,relmp,atom_types=[8,9],updown=4):
 			1 2 3 4 5 6 7 <-8 9; 1 2 3 <-8 9 4 5 6 7, updown = 4
 	"""
 	Masses = list(read_mass(lmp)[0].items())
+	# print(Masses)
 	nmasses = len(Masses)
 	origin_all_types, new_all_types = [],[]
 	for i in range(nmasses):
@@ -2204,13 +2205,17 @@ def change_type_order(lmp,relmp,atom_types=[8,9],updown=4):
 				Masses[i] = list(Masses[i])
 				Masses[i][0] = str(int(Masses[i][0])+len(atom_types))
 	Masses = np.array(Masses)
+	# print(Masses)
+	new_all_types = Masses[:,0]
 	Masses =  Masses[np.argsort([int(x) for x in Masses[:, 0]])]
+	# print(Masses)
 	lmp_Masses = array2str(Masses)
-	move_term = origin_all_types[-len(atom_types):]
-	new_all_types = origin_all_types[:-len(atom_types) + updown+1] + move_term + \
-					origin_all_types[-2 + updown+1:-len(atom_types)]
+	# move_term = origin_all_types[-len(atom_types):]
+	# print(move_term)
+	# new_all_types = origin_all_types[:-len(atom_types) + updown+1] + move_term + \
+	# 				origin_all_types[-2 + updown+1:-len(atom_types)]
 	type_dict = dict(zip(new_all_types,origin_all_types))
-	# print(type_dict)
+	# print(new_all_types)
 
 	Atoms = str2array(read_data(lmp,"Atoms"))
 	m = len(Atoms)
