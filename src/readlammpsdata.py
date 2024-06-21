@@ -2236,7 +2236,8 @@ def change_type_order(lmp,relmp,atom_types=[8,9],updown=4):
 		   "Pair Coeffs" in term or \
 		   "Bond Coeffs" in term or \
 		   "Angle Coeffs" in term:
-			pass
+			f.write(term)
+			f.write(term_info)
 		else:
 			f.write(term)
 			f.write(term_info)
