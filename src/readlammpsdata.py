@@ -1381,9 +1381,9 @@ def modify_methane_hydrate(lmp, relmp, axis="z",distance=1.1):
 	Angles = add_atoms(Angles_string,add_angles)
 
 	with open(relmp,"w") as f:
-		Header = modify_header(Header,hterm="atoms",number=Natoms)
-		Header = modify_header(Header,hterm="bonds",number=Nbonds)
-		Header = modify_header(Header,hterm="angles",number=NAngles)
+		Header = modify_header(Header,hterm="atoms",value=Natoms)
+		Header = modify_header(Header,hterm="bonds",value=Nbonds)
+		Header = modify_header(Header,hterm="angles",value=NAngles)
 		f.write(Header)
 		for term in terms:
 			if "Atoms" in term:
