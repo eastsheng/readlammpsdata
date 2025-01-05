@@ -2243,6 +2243,115 @@ def merge_masslists(list1, list2,natomtypes,diffence_natoms):
 			merged_list.append(item)
 	return merged_list
 
+def change_atom_types(lmp,relmp):
+	"""
+	Changing the atomic type starts with 1
+	for the "system.data" inherits oplsaa from moltempate 
+	Parameters:
+	- lmp: lammps data
+	- relmp: rewrite lammps data
+	"""
+	Masses = read_data(lmp,"Masses")
+	Masses = str2array(Masses)
+	
+	Atoms = read_data(lmp,"Atoms")
+	Atoms = str2array(Atoms)
+	atom_types = np.unique(Atoms[:, 2])
+	Natomtypes = len(atom_types)
+	Masses_new = Masses[np.isin(Masses[:, 0], atom_types)]
+
+	old_type = Masses_new[:,0]
+	Masses_new1 = Masses_new.copy()
+	Masses_new1[:,0] = [i+1 for i in range(Natomtypes)]
+	new_type = Masses_new1[:,0]
+	dict_types = dict(zip(old_type, new_type))
+
+	for i in range(len(Atoms)):
+		Atoms[i,2] = dict_types[Atoms[i,2]]
+
+	Bonds = read_data(lmp,"Bonds")
+	Bonds = str2array(Bonds)
+	bond_types = np.unique(Bonds[:, 1])
+	Nbondtypes = len(bond_types)
+	old_type = Bonds[:,1]
+	Bonds1 = Bonds.copy()
+	Bonds1[:,0] = [i+1 for i in range(Nbondtypes)]
+	new_type = Bonds1[:,0]
+	dict_types = dict(zip(old_type, new_type))
+	for i in range(len(Bonds)):
+		Bonds[i,1] = dict_types[Bonds[i,1]]
+
+	Angles = read_data(lmp,"Angles")
+	Angles = str2array(Angles)
+	angle_types = np.unique(Angles[:, 1])
+	Nangletypes = len(angle_types)
+	old_type = Angles[:,1]
+	Angles1 = Angles.copy()
+	Angles1[:,0] = [i+1 for i in range(Nangletypes)]
+	new_type = Angles1[:,0]
+	dict_types = dict(zip(old_type, new_type))
+
+	for i in range(len(Angles)):
+		Angles[i,1] = dict_types[Angles[i,1]]
+
+	try:
+		Dihedrals = read_data(lmp,"Dihedrals")
+		Dihedrals = str2array(Dihedrals)
+		dihedral_types = np.unique(Dihedrals[:, 1])
+		Ndihedraltypes = len(dihedral_types)
+	except:
+		Ndihedraltypes = 0
+
+	try:
+		Impropers = read_data(lmp,"Impropers")
+		Impropers = str2array(Impropers)
+		improper_types = np.unique(Impropers[:, 1])
+		Nimpropertypes = len(improper_types)
+	except:
+		Nimpropertypes = 0
+
+	f = open(relmp,"w")
+	Header = read_data(lmp,"Header").strip()
+	Header = modify_header(Header,hterm="atom types",value=Natomtypes)
+	Header = modify_header(Header,hterm="bond types",value=Nbondtypes)
+	Header = modify_header(Header,hterm="angle types",value=Nangletypes)
+	try:
+		Header = modify_header(Header,hterm="dihedral types",value=Ndihedraltypes)
+	except:
+		pass
+	try:
+		Header = modify_header(Header,hterm="improper types",value=Nimpropertypes)
+	except:
+		pass
+
+	terms = read_terms(lmp)
+	f.write(Header.strip("\n"))
+	f.write("\n")
+	for term in terms:
+		if "Masses" in term:
+			data_term = Masses_new1
+		elif "Atoms" in term:
+			data_term = Atoms
+		elif "Bonds" in term:
+			data_term = Bonds
+		elif "Angles" in term:
+			data_term = Angles
+		elif "Dihedrals" in term:
+			data_term = Dihedrals
+		elif "Impropers" in term:
+			data_term = Impropers
+		else:
+			data_term = read_data(lmp,term)
+			data_term = str2array(data_term)
+		f.write("\n"+term+"\n\n")
+		m, n = data_term.shape
+		for i in range(m):
+			for j in range(n):
+				f.write(data_term[i][j]+"\t")
+			f.write("\n")
+	f.close()
+
+	return
 
 def change_type_order(lmp,relmp,atom_types=[8,9],updown=4):
 	"""
