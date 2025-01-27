@@ -2243,6 +2243,63 @@ def merge_masslists(list1, list2,natomtypes,diffence_natoms):
 			merged_list.append(item)
 	return merged_list
 
+def replace_atom_types(lmp,relmp,atomtypes_start,atomtypes_end):
+	"""
+	replace atom types
+	Parameter:
+	- lmp: orginal lammps data
+	- relmp: final lammps data
+	- atomtypes_start: orginal atom type, such as, [1,2,5,6]
+	- atomtypes_end: final atom type, such as, [1,2,3,4]
+	"""
+	Atoms = read_data(lmp,"Atoms")
+	Atoms = str2array(Atoms)
+	types = np.unique(Atoms[:,2]).astype(int)
+	types = np.sort(types)
+	print(f">>> Orginal types: {types}")
+	modify_atoms = dict(zip(atomtypes_start, atomtypes_end))
+
+	Masses = read_data(lmp,"Masses")
+	Masses = str2array(Masses)
+	for i in range(len(modify_atoms)):
+		Masses[i,0] = modify_atoms[int(Masses[i,0])]
+
+	Atoms = read_data(lmp,"Atoms")
+	Atoms = str2array(Atoms)
+	Atoms_copy = Atoms.copy()
+	for i in range(len(Atoms_copy)):
+		Atoms_copy[i,2] = modify_atoms[int(Atoms[i,2])]
+	types = np.unique(Atoms_copy[:,2]).astype(int)
+	types = np.sort(types)
+
+	print(f">>> Final types: {types}")
+
+	f = open(relmp,"w")
+	Header = read_data(lmp,"Header").strip()
+	terms = read_terms(lmp)
+	f.write(Header)
+	f.write("\n")
+	for term in terms:
+		if "Masses" in term:
+			data_term = Masses
+		elif "Atoms" in term:
+			data_term = Atoms_copy
+			data_term = data_term[np.argsort(data_term[:,1].astype(int))]
+		else:
+			data_term = read_data(lmp,term)
+			data_term = str2array(data_term)
+			data_term = data_term[np.argsort(data_term[:,0].astype(int))]
+		f.write("\n"+term+"\n\n")
+		m, n = data_term.shape
+		for i in range(m):
+			for j in range(n):
+				f.write(data_term[i][j]+"\t")
+			f.write("\n")
+	f.close()
+	print(">>> Modified atomic types successfully !")
+	return
+
+
 def change_atom_types(lmp,relmp):
 	"""
 	Changing the atomic type starts with 1
