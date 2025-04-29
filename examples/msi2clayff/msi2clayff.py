@@ -5,8 +5,15 @@
 import readlammpsdata as rld
 
 if __name__ == '__main__':
-	# inital lammpsdata obtained from msi2lmp.exe tool
-	msi_data = "sio2_1nm.data"
-	clayff_data = "sio2_1nm_clayff.data"
+	# # inital lammpsdata obtained from msi2lmp.exe tool
+	# msi_data = "sio2_1nm.data"
+	# clayff_data = "sio2_1nm_clayff.data"
 
-	rld.msi2clayff(msi_data,clayff_data)
+	# rld.msi2clayff(msi_data,clayff_data)
+
+
+	msi_data = "sio2_modified.data"
+	clayff_data = "sio2_modified_clayff.data"
+
+	rld.msi2clayff_modified(msi_data,clayff_data)
+
