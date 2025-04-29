@@ -11,7 +11,7 @@ def __version__():
 	"""
 	read the version of readlammpsdata
 	"""
-	version = "1.0.9"
+	version = "1.1.0"
 	return version
 
 def print_version():

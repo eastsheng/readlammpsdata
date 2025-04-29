@@ -50,6 +50,8 @@ print(help(rld)) # for read all functions
 
 ### Fixes
 
+- 2025-04-29
+  - [x] Added the `msi2clayff_modified` function
 - 2023-11-24
   - [x] Fixed bugs of  `addH`
 - 2023-11-22

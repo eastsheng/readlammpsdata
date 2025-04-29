@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: readlammpsdata
-Version: 1.0.9
+Version: 1.1.0
 Summary: Read lammps data infomations.
 Home-page: https://github.com/eastsheng/readlammpsdata
 Author: CHENDONGSHENG
@@ -62,6 +62,8 @@ print(help(rld)) # for read all functions
 
 ### Fixes
 
+- 2025-04-29
+  - [x] Added the `msi2clayff_modified` function
 - 2023-11-24
   - [x] Fixed bugs of  `addH`
 - 2023-11-22
