@@ -245,7 +245,7 @@ Dihedral Coeffs
 	 89     0.0000   0   0 # ho-oh-s-c2
 	 90     0.0000   0   0 # ho-oh-s-o'
 
-Impropers Coeffs
+Improper Coeffs
 
 	    1    11.6000  -1   2 # c1-c'-o-o'
 	    2    10.0000  -1   2 # c1-c'-n-o'

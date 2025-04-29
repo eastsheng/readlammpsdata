@@ -11,7 +11,7 @@ def __version__():
 	"""
 	read the version of readlammpsdata
 	"""
-	version = "1.1.1"
+	version = "1.1.2"
 	return version
 
 def print_version():
@@ -1116,7 +1116,7 @@ def msi2clayff_modified(lmp, clayff_lmp):
 		for d in DihedralCoeffs:
 			f.write("\t"+d+"\n")
 
-		f.write("\nImpropers Coeffs\n\n")
+		f.write("\nImproper Coeffs\n\n")
 		for i in ImproperCoeffs:
 			f.write("\t"+i+"\n")
 			
