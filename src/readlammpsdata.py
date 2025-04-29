@@ -11,7 +11,7 @@ def __version__():
 	"""
 	read the version of readlammpsdata
 	"""
-	version = "1.1.0"
+	version = "1.1.1"
 	return version
 
 def print_version():
@@ -706,7 +706,7 @@ def replace_term_info(term,a_dict):
 				term[i] = ' '.join(term[i])
 				term[i] = '   '+term[i]
 		new_term.append(term[i])
-	print(new_term)
+	# print(new_term)
 	return new_term
 
 def select_term_info(XCoeffs,term):
@@ -1115,6 +1115,10 @@ def msi2clayff_modified(lmp, clayff_lmp):
 		f.write("\nDihedral Coeffs\n\n")
 		for d in DihedralCoeffs:
 			f.write("\t"+d+"\n")
+
+		f.write("\nImpropers Coeffs\n\n")
+		for i in ImproperCoeffs:
+			f.write("\t"+i+"\n")
 			
 		f.write("\nAtoms")
 		f.write(Atoms)
