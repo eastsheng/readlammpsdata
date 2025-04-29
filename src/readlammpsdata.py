@@ -697,15 +697,16 @@ def lmp2lammpstrj(lmp,lammpstrj):
 
 def replace_term_info(term,a_dict):
 	new_term = []
+	term = [x for x in term if x not in [""]]
 	for i in range(len(term)):
 		for key, value in a_dict.items():
 			if key in term[i]:
 				term[i] = term[i].strip().split(' ', 2)
 				term[i][2] = str(value) + ' # ' + key
-				temp = '  '.join(term[i])
-				new_term.append(temp)
-				# print(temp)
-	# term = [x for x in term if x not in [""]]
+				term[i] = ' '.join(term[i])
+				term[i] = '   '+term[i]
+		new_term.append(term[i])
+	print(new_term)
 	return new_term
 
 def select_term_info(XCoeffs,term):
@@ -720,7 +721,10 @@ def select_term_info(XCoeffs,term):
 
 def replace_charges(Atoms,charges_dict,atoms_id_dict):
 	for i in range(len(Atoms)):
-		Atoms[i,3] = charges_dict[atoms_id_dict[Atoms[i,2]]]
+		if int(Atoms[i,2])<4:
+			Atoms[i,3] = charges_dict[atoms_id_dict[Atoms[i,2]]]
+		else:
+			pass
 	return Atoms
 
 
@@ -981,6 +985,177 @@ def msi2clayff_OH(lmp, clayff_lmp):
 			f.write("\n")
 	print(">>> Convert a lmp obtained from msi2lmp to clayff force field successfully !")
 	return
+
+
+@print_line
+def msi2clayff_modified(lmp, clayff_lmp):
+	"""
+	# J. Phys. Chem. B, Vol. 108, No. 4, 2004 1259
+	convert a lmp with modified group obtained from msi2lmp (from Materials Studio) to clayff force field
+	lmp: original lmp obtained from msi2lmp
+	clayff_lmp: rewrite lammps data
+	"""
+	Header = read_data(lmp,"Header")
+	# print(Header)
+	Masses = read_data(lmp,"Masses").split("\n")
+	mass_dict = {"sz":"28.085500","oz":"15.999400","oh":"15.999400","ho":"1.007970"}
+	Masses = replace_term_info(Masses,mass_dict)
+	
+	PairCoeffs = read_data(lmp,"Pair Coeffs").split("\n")
+	pair_dict = {"sz":"0.00000184050       3.3020000000",
+				 "oz":"0.15540000000       3.1655700000",
+				 "oh":"0.15540000000       3.1655700000",
+				 "ho":"0.00000000000       0.0000000000"}
+	PairCoeffs = replace_term_info(PairCoeffs,pair_dict)
+	
+	BondCoeffs = read_data(lmp,"Bond Coeffs").split("\n")
+	bond_dict = {"oh-ho":"554.1349     1.0000"}
+	BondCoeffs = replace_term_info(BondCoeffs,bond_dict)
+	bond_type_number = len(BondCoeffs)
+
+	AngleCoeffs = read_data(lmp,"Angle Coeffs").split("\n")
+	angle_dict = {"sz-oh-ho":"30.0     109.47"}
+	AngleCoeffs = replace_term_info(AngleCoeffs,angle_dict)
+	angle_type_number = len(AngleCoeffs)
+
+	DihedralCoeffs = read_data(lmp,"Dihedral Coeffs").split("\n")
+	dihedral_dict = {}
+	DihedralCoeffs = replace_term_info(DihedralCoeffs,dihedral_dict)
+	dihedral_type_number = len(DihedralCoeffs)
+
+	ImproperCoeffs = read_data(lmp,"Improper Coeffs").split("\n")
+	improper_dict = {}
+	ImproperCoeffs = replace_term_info(ImproperCoeffs,improper_dict)
+	improper_type_number = len(ImproperCoeffs)
+
+	Atoms = read_data(lmp,"Atoms")
+	Atoms = str2array(Atoms)
+	charges_dict = {"sz":"2.100000","oz":"-1.050000","oh":"-0.950000","ho":"0.425000"}
+	atoms_id_dict = {}
+	# print(Masses)
+	for item in Masses:
+		words = item.split()
+		key = words[0]
+		value = words[-1]
+		atoms_id_dict[key] = value
+	Atoms = replace_charges(Atoms,charges_dict,atoms_id_dict)
+	Atoms = array2str(Atoms)
+
+	Bonds = read_data(lmp,"Bonds")
+	Bonds = str2array(Bonds)
+	new_bonds = select_term_info(BondCoeffs,Bonds)
+	bond_number = len(new_bonds)
+	
+	Angles = read_data(lmp,"Angles")
+	Angles = str2array(Angles)
+	new_angles = select_term_info(AngleCoeffs,Angles)
+	angle_number = len(new_angles)
+
+	Dihedrals = read_data(lmp,"Dihedrals")
+	Dihedrals = str2array(Dihedrals)
+	new_dihedrals = select_term_info(DihedralCoeffs,Dihedrals)
+	dihedral_number = len(new_dihedrals)
+
+	Impropers = read_data(lmp,"Impropers")
+	Impropers = str2array(Impropers)
+	new_impropers = select_term_info(ImproperCoeffs,Impropers)
+	improper_number = len(new_impropers)
+
+	with open(clayff_lmp,"w") as f:
+		Header = Header.split("\n")
+		for i in range(len(Header)):
+			if "bonds" in Header[i]:
+				Header[i] = "     "+str(bond_number)+" bonds"
+				print(Header[i])
+			elif "angles" in Header[i]:
+				Header[i] = "     "+str(angle_number)+" angles"
+				print(Header[i])
+			# elif "dihedrals" in Header[i]:
+			# 	Header[i] = "     "+str(dihedral_number)+" dihedrals"
+			# elif "impropers" in Header[i]:
+			# 	Header[i] = "     "+str(improper_number)+" impropers"
+			# 	print(Header[i])
+			elif "bond types" in Header[i]:
+				Header[i] = "   "+str(bond_type_number)+" bond types"
+				print(Header[i])
+			elif "angle types" in Header[i]:
+				Header[i] = "   "+str(angle_type_number)+" angle types"
+				print(Header[i])
+			# elif "dihedral types" in Header[i]:
+			# 	Header[i] = "   "+str(dihedral_type_number)+" dihedral types"
+			# 	print(Header[i])
+
+		for h in Header:
+			f.write(h+"\n")
+
+		f.write("Masses\n\n")
+		for m in Masses:
+			f.write("\t"+m+"\n")
+
+		f.write("\nPair Coeffs\n\n")
+		for p in PairCoeffs:
+			f.write("\t"+p+"\n")
+
+		f.write("\nBond Coeffs\n\n")
+		for b in BondCoeffs:
+			if bond_type_number == 1:
+				b = b.strip().split()
+				b[0] = "1"
+				b = "\t".join(b)
+			f.write("\t"+b+"\n")
+
+		f.write("\nAngle Coeffs\n\n")
+		for a in AngleCoeffs:
+			if angle_type_number == 1:
+				a = a.strip().split()
+				a[0] = "1"
+				a = "\t".join(a)
+			f.write("\t"+a+"\n")
+
+		f.write("\nDihedral Coeffs\n\n")
+		for d in DihedralCoeffs:
+			f.write("\t"+d+"\n")
+			
+		f.write("\nAtoms")
+		f.write(Atoms)
+
+		f.write("Bonds\n\n")
+		for i in range(bond_number):
+			for j in range(4):
+				new_bonds[i][0] = str(i+1)
+				if bond_type_number == 1:
+					new_bonds[i][1] = str(bond_type_number)
+
+				f.write(new_bonds[i][j]+"\t")
+			f.write("\n")
+
+		f.write("\nAngles\n\n")
+		for i in range(angle_number):
+			for j in range(5):
+				if angle_type_number == 1:
+					new_angles[i][1] = str(angle_type_number)
+				new_angles[i][0] = str(i+1)
+				f.write(new_angles[i][j]+"\t")
+			f.write("\n")
+
+		f.write("\nDihedrals\n\n")
+		for i in range(dihedral_number):
+			for j in range(6):
+				f.write(new_dihedrals[i][j]+"\t")
+			f.write("\n")
+
+
+		f.write("\nImpropers\n\n")
+		for i in range(improper_number):
+			for j in range(6):
+				f.write(new_impropers[i][j]+"\t")
+			f.write("\n")
+
+
+	print(">>> Convert a lmp obtained from msi2lmp to clayff force field successfully !")
+	return
+
+
 
 
 @print_line
